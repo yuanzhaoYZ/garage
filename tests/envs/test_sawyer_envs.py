@@ -2,7 +2,10 @@ import numpy as np
 
 from garage.algos import TRPO
 from garage.baselines import LinearFeatureBaseline
-from garage.envs.mujoco.sawyer import BinSortingEnv, BlockStackingEnv, PickAndPlaceEnv
+from garage.envs.mujoco.sawyer import BinSortingEnv
+from garage.envs.mujoco.sawyer import BlockStackingEnv
+from garage.envs.mujoco.sawyer import PickAndPlaceEnv
+from garage.envs.mujoco.sawyer import ReachEnv
 from garage.envs.util import spec
 from garage.misc.instrument import run_experiment
 from garage.policies import GaussianMLPPolicy
@@ -69,16 +72,18 @@ def run_pick_and_place(*_):
 
 
 def test_env():
-    env = BlockStackingEnv()
-    for i in range(5000):
+    initial_goal = np.array([0.6, -0.1, 0.80])
+    env = ReachEnv(initial_goal)
+    for i in range(10):
         env.render()
         action = env.action_space.sample()
         env.step(action)
     env.reset()
+    env.close()
 
 
 test_env()
-run_experiment_lite(
+run_experiment(
     run_bin_sorting,
     n_parallel=2,
     plot=True,

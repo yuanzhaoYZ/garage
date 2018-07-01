@@ -1,4 +1,3 @@
-from gym.envs.robotics import rotations
 from gym.spaces import Box
 import numpy as np
 
@@ -8,9 +7,9 @@ from garage.envs.mujoco import MujocoEnv
 from garage.misc.overrides import overrides
 
 
-class PickAndPlaceEnv(MujocoEnv, Serializable):
+class ReachEnv(MujocoEnv, Serializable):
 
-    FILE = 'pick_and_place.xml'
+    FILE = "reach.xml"
 
     def __init__(self,
                  initial_goal,
@@ -19,14 +18,14 @@ class PickAndPlaceEnv(MujocoEnv, Serializable):
                  sparse_reward=True,
                  *args,
                  **kwargs):
-        Serializable.__init__(self, *args, **kwargs)
+        Serializable.quick_init(self, locals())
         self._initial_goal = initial_goal
         self._distance_threshold = distance_threshold
         self._target_range = target_range
         self._sparse_reward = sparse_reward
 
         self._goal = self._initial_goal
-        super(PickAndPlaceEnv, self).__init__(*args, **kwargs)
+        super(ReachEnv, self).__init__(*args, **kwargs)
 
     @overrides
     def step(self, action):
@@ -49,6 +48,35 @@ class PickAndPlaceEnv(MujocoEnv, Serializable):
             return -(d > self._distance_threshold).astype(np.float32)
         else:
             return -d
+
+    @overrides
+    def get_current_obs(self):
+        grip_pos = self.sim.data.get_site_xpos('grip')
+        dt = self.sim.nsubsteps * self.sim.model.opt.timestep
+        grip_velp = self.sim.data.get_site_xvelp('grip') * dt
+
+        qpos = self.sim.data.qpos
+        qvel = self.sim.data.qvel
+
+        achieved_goal = np.squeeze(grip_pos.copy())
+
+        obs = np.concatenate([
+            grip_pos,
+            grip_velp,
+            qpos,
+            qvel,
+        ])
+
+        return {
+            'observation': obs.copy(),
+            'achieved_goal': achieved_goal.copy(),
+            'desired_goal': self._goal
+        }
+
+    @staticmethod
+    def _goal_distance(goal_a, goal_b):
+        assert goal_a.shape == goal_b.shape
+        return np.linalg.norm(goal_a - goal_b, axis=-1)
 
     def sample_goal(self):
         """
@@ -73,43 +101,6 @@ class PickAndPlaceEnv(MujocoEnv, Serializable):
             -np.inf, np.inf, shape=self.get_current_obs()['observation'].shape)
 
     @overrides
-    def get_current_obs(self):
-        grip_pos = self.sim.data.get_site_xpos('grip')
-        dt = self.sim.nsubsteps * self.sim.model.opt.timestep
-        grip_velp = self.sim.data.get_site_xvelp('grip') * dt
-
-        qpos = self.sim.data.qpos
-        qvel = self.sim.data.qvel
-
-        object_pos = self.sim.data.get_site_xpos('object0')
-        object_rot = rotations.mat2euler(
-            self.sim.data.get_site_xmat('object0'))
-        object_velp = self.sim.data.get_site_xvelp('object0') * dt
-        object_velr = self.sim.data.get_site_xvelr('object0') * dt
-        object_rel_pos = object_pos - grip_pos
-        object_velp -= grip_velp
-
-        achieved_goal = np.squeeze(object_pos.copy())
-
-        obs = np.concatenate([
-            grip_pos,
-            object_pos.ravel(),
-            object_rel_pos.ravel(),
-            object_rot.ravel(),
-            object_velp.ravel(),
-            object_velr.ravel(),
-            grip_velp,
-            qpos,
-            qvel,
-        ])
-
-        return {
-            'observation': obs.copy(),
-            'achieved_goal': achieved_goal.copy(),
-            'desired_goal': self._goal
-        }
-
-    @staticmethod
-    def _goal_distance(goal_a, goal_b):
-        assert goal_a.shape == goal_b.shape
-        return np.linalg.norm(goal_a - goal_b, axis=-1)
+    def close(self):
+        if self.viewer is not None:
+            self.viewer = None
