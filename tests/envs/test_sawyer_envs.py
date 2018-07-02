@@ -5,7 +5,7 @@ from garage.baselines import LinearFeatureBaseline
 from garage.envs.mujoco.sawyer import BinSortingEnv
 from garage.envs.mujoco.sawyer import BlockStackingEnv
 from garage.envs.mujoco.sawyer import PickAndPlaceEnv
-from garage.envs.mujoco.sawyer import ReachEnv
+from garage.envs.mujoco.sawyer import ReacherEnv
 from garage.envs.util import spec
 from garage.misc.instrument import run_experiment
 from garage.policies import GaussianMLPPolicy
@@ -82,18 +82,18 @@ def test_env():
         'right_j5': -0.7052822265625,
         'right_j6': -1.4102060546875,
     }
-    env = ReachEnv(initial_goal, initial_qpos)
+    env = ReacherEnv(initial_goal, initial_qpos)
     for i in range(9999):
         env.render()
-        action = env.action_space.sample()
-        env.step(action)
+        # action = env.action_space.sample()
+        # env.step(action)
     env.reset()
     env.close()
 
 
 test_env()
-run_experiment(
-    run_bin_sorting,
-    n_parallel=2,
-    plot=True,
-)
+# run_experiment(
+#     run_bin_sorting,
+#     n_parallel=2,
+#     plot=True,
+# )
