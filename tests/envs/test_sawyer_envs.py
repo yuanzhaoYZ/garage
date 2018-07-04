@@ -82,18 +82,21 @@ def test_env():
         'right_j5': -0.7052822265625,
         'right_j6': -1.4102060546875,
     }
-    env = ReacherEnv(initial_goal, initial_qpos)
+    env = ReacherEnv(initial_goal, initial_qpos, control_method='position_control')
     for i in range(9999):
         env.render()
-        # action = env.action_space.sample()
-        # env.step(action)
+        action = initial_goal
+        next_obs, reward, done, _ = env.step(action)
+        if done:
+            print(reward)
+            break
     env.reset()
     env.close()
 
-
-test_env()
-# run_experiment(
-#     run_bin_sorting,
-#     n_parallel=2,
-#     plot=True,
-# )
+#
+# test_env()
+run_experiment(
+    run_bin_sorting,
+    n_parallel=2,
+    plot=True,
+)

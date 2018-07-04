@@ -33,7 +33,7 @@ class VectorizedSampler(BaseSampler):
             ]
             self.vec_env = VecEnvExecutor(
                 envs=envs, max_path_length=self.algo.max_path_length)
-        self.env_spec = self.algo.env.spec
+        self.env_spec = self.algo.env_spec    # TODO fix this...
 
     def shutdown_worker(self):
         self.vec_env.close()

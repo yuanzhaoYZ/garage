@@ -183,3 +183,6 @@ class ReacherEnv(MujocoEnv, Serializable):
         """Make sure the environment start another viewer next time."""
         if self.viewer is not None:
             self.viewer = None
+
+    def log_diagnostics(self, paths):
+        pass
