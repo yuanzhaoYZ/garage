@@ -17,10 +17,10 @@ def run(*_):
         baseline=baseline,
         batch_size=4000,
         max_path_length=400,
-        n_itr=100,
+        n_itr=2000,
         discount=0.99,
         step_size=0.01,
-        plot=True
+#        plot=True
     )
     algo.train()
 
@@ -28,6 +28,6 @@ def run(*_):
 run_experiment(
     run,
     n_parallel=2,
-    plot=True,
+    plot=False,
 )
 
