@@ -1,13 +1,13 @@
 from garage.baselines import LinearFeatureBaseline
 from garage.tf.algos import TRPO
 from garage.envs.util import spec, tf_spec
-from garage.envs.mujoco.sawyer import ReacherEnv
+from garage.envs.mujoco.sawyer import PickAndPlaceEnv
 from garage.misc.instrument import run_experiment
 from garage.tf.policies import GaussianMLPPolicy
 
 
 def run(*_):
-    env = ReacherEnv()
+    env = PickAndPlaceEnv()
 
     baseline = LinearFeatureBaseline(env_spec=spec(env))
     policy = GaussianMLPPolicy(env_spec=tf_spec(env), hidden_sizes=(32, 32))
@@ -15,9 +15,9 @@ def run(*_):
         env=env,
         policy=policy,
         baseline=baseline,
-        batch_size=4000,
-        max_path_length=400,
-        n_itr=100,
+        batch_size=10000,
+        max_path_length=10000,
+        n_itr=2000,
         discount=0.99,
         step_size=0.01,
         plot=True

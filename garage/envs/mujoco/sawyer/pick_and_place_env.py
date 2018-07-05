@@ -1,4 +1,5 @@
 from gym.envs.robotics import rotations
+from gym.envs.robotics.utils import ctrl_set_action, mocap_set_action
 from gym.spaces import Box
 import numpy as np
 
@@ -13,24 +14,55 @@ class PickAndPlaceEnv(MujocoEnv, Serializable):
     FILE = 'pick_and_place.xml'
 
     def __init__(self,
-                 initial_goal,
-                 distance_threshold=0.05,
+                 initial_goal=None,
+                 initial_qpos=None,
+                 distance_threshold=0.07,
                  target_range=0.15,
-                 sparse_reward=True,
+                 sparse_reward=False,
+                 control_method='position_control',
                  *args,
                  **kwargs):
         Serializable.__init__(self, *args, **kwargs)
-        self._initial_goal = initial_goal
+        if initial_goal is not None:
+            self._initial_goal = initial_goal
+        else:
+            self._initial_goal = np.array([0.6, -0.1, 0.80])
+        if initial_qpos is not None:
+            self._initial_qpos = initial_qpos
+        else:
+            self._initial_qpos = {
+                'right_j0': -0.140923828125,
+                'right_j1': -1.2789248046875,
+                'right_j2': -3.043166015625,
+                'right_j3': -2.139623046875,
+                'right_j4': -0.047607421875,
+                'right_j5': -0.7052822265625,
+                'right_j6': -1.4102060546875,
+            }
         self._distance_threshold = distance_threshold
         self._target_range = target_range
         self._sparse_reward = sparse_reward
-
+        self._control_method = control_method
         self._goal = self._initial_goal
         super(PickAndPlaceEnv, self).__init__(*args, **kwargs)
+        self.env_setup(self._initial_qpos)
 
     @overrides
-    def step(self, action):
-        self.forward_dynamics(action)
+    def step(self, action: np.ndarray):
+        action = np.clip(action, self.action_space.low, self.action_space.high)
+        if self._control_method == 'torque_control':
+            self.forward_dynamics(action)
+        elif self._control_method == 'position_control':
+            assert action.shape == (4,)
+            action = action.copy()
+            pos_ctrl, gripper_ctrl = action[:3], action[3]
+            # pos_ctrl *= 0.1  # limit the action
+            rot_ctrl = np.array([1., 0., 1., 0.])
+            gripper_ctrl = np.array([gripper_ctrl, -gripper_ctrl])
+            action = np.concatenate([pos_ctrl, rot_ctrl, gripper_ctrl])
+            ctrl_set_action(self.sim, action)  # For gripper
+            mocap_set_action(self.sim, action)  # For pos control of the end effector
+            self.sim.step()
 
         obs = self.get_current_obs()
         next_obs = obs['observation']
@@ -44,11 +76,16 @@ class PickAndPlaceEnv(MujocoEnv, Serializable):
 
     def _compute_reward(self, achieved_goal, goal):
         # Compute distance between goal and the achieved goal.
+        reward = 0
         d = self._goal_distance(achieved_goal, goal)
         if self._sparse_reward:
-            return -(d > self._distance_threshold).astype(np.float32)
+            reward += -(d > self._distance_threshold).astype(np.float32)
         else:
-            return -d
+            reward += -d
+
+        if d < self._distance_threshold:
+            reward += 1000
+        return reward
 
     def sample_goal(self):
         """
@@ -70,7 +107,7 @@ class PickAndPlaceEnv(MujocoEnv, Serializable):
         Returns a Space object
         """
         return Box(
-            -np.inf, np.inf, shape=self.get_current_obs()['observation'].shape)
+            -np.inf, np.inf, shape=self.get_current_obs()['observation'].shape, dtype=np.float32)
 
     @overrides
     def get_current_obs(self):
@@ -113,3 +150,18 @@ class PickAndPlaceEnv(MujocoEnv, Serializable):
     def _goal_distance(goal_a, goal_b):
         assert goal_a.shape == goal_b.shape
         return np.linalg.norm(goal_a - goal_b, axis=-1)
+
+    @property
+    def action_space(self):
+        if self._control_method == 'torque_control':
+            return super(PickAndPlaceEnv, self).action_space()
+        elif self._control_method == 'position_control':
+            return Box(np.array([-0.1, -0.1, -0.1, -100]),
+                       np.array([0.1, 0.1, 0.1, 100]), dtype=np.float32)
+
+    @overrides
+    def reset(self, init_state=None):
+        return super(PickAndPlaceEnv, self).reset(init_state)['observation']
+
+    def log_diagnostics(self, paths):
+        pass

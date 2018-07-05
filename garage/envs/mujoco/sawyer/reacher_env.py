@@ -1,5 +1,6 @@
 """Reacher environment for the sawyer robot."""
 
+from gym.envs.robotics.utils import mocap_set_action
 from gym.spaces import Box
 import numpy as np
 
@@ -63,16 +64,20 @@ class ReacherEnv(MujocoEnv, Serializable):
         """
         Perform one step with action.
 
-        :param action: the action to be performed
+        :param action: the action to be performed, (x, y, z) only for pos_ctrl
         :return: next_obs, reward, done, info
         """
+        action = np.clip(action, self.action_space.low, self.action_space.high)
         if self._control_method == 'torque_control':
             self.forward_dynamics(action)
         elif self._control_method == 'position_control':
-            action = np.clip(action, -1, 1)
-            self.sim.data.set_mocap_pos('mocap', action)
-            for _ in range(10):
-                self.sim.step()
+            assert action.shape == (3,)
+            action = action.copy()
+            action *= 0.1  # limit the action
+            rot_ctrl = np.array([1., 0., 1., 0.])
+            action = np.concatenate([action, rot_ctrl])
+            mocap_set_action(self.sim, action)  # For pos control of the end effector
+            self.sim.step()
         else:
             raise NotImplementedError
 
