@@ -16,7 +16,7 @@ class PickAndPlaceEnv(MujocoEnv, Serializable):
     def __init__(self,
                  initial_goal=None,
                  initial_qpos=None,
-                 distance_threshold=0.07,
+                 distance_threshold=0.05,
                  target_range=0.15,
                  sparse_reward=False,
                  control_method='position_control',
@@ -26,7 +26,7 @@ class PickAndPlaceEnv(MujocoEnv, Serializable):
         if initial_goal is not None:
             self._initial_goal = initial_goal
         else:
-            self._initial_goal = np.array([0.6, -0.1, 0.80])
+            self._initial_goal = np.array([0.7, 0.18, 0.0])
         if initial_qpos is not None:
             self._initial_qpos = initial_qpos
         else:
@@ -44,6 +44,7 @@ class PickAndPlaceEnv(MujocoEnv, Serializable):
         self._sparse_reward = sparse_reward
         self._control_method = control_method
         self._goal = self._initial_goal
+        self._grasped = False
         super(PickAndPlaceEnv, self).__init__(*args, **kwargs)
         self.env_setup(self._initial_qpos)
 
@@ -56,8 +57,9 @@ class PickAndPlaceEnv(MujocoEnv, Serializable):
             assert action.shape == (4,)
             action = action.copy()
             pos_ctrl, gripper_ctrl = action[:3], action[3]
-            # pos_ctrl *= 0.1  # limit the action
-            rot_ctrl = np.array([1., 0., 1., 0.])
+            pos_ctrl *= 0.5  # limit the action
+            rot_ctrl = np.array([0., 1., 1., 0.])
+            gripper_ctrl = -50 if  gripper_ctrl < 0 else 10
             gripper_ctrl = np.array([gripper_ctrl, -gripper_ctrl])
             action = np.concatenate([pos_ctrl, rot_ctrl, gripper_ctrl])
             ctrl_set_action(self.sim, action)  # For gripper
@@ -68,24 +70,49 @@ class PickAndPlaceEnv(MujocoEnv, Serializable):
         next_obs = obs['observation']
         achieved_goal = obs['achieved_goal']
         goal = obs['desired_goal']
-        reward = self._compute_reward(achieved_goal, goal)
+        gripper_pos = obs['gripper_pos']
+        reward = self._compute_reward(achieved_goal, goal, gripper_pos)
         done = (self._goal_distance(achieved_goal, goal) <
                 self._distance_threshold)
 
         return Step(next_obs, reward, done)
 
-    def _compute_reward(self, achieved_goal, goal):
+    def _compute_reward(self, achieved_goal, goal, gripper_pos):
         # Compute distance between goal and the achieved goal.
+        grasped = self._grasp()
         reward = 0
-        d = self._goal_distance(achieved_goal, goal)
+        if not grasped:
+            # first phase: move towards the object
+            d = self._goal_distance(gripper_pos, achieved_goal)
+        else:
+            d = self._goal_distance(achieved_goal, goal)
+            if not self._grasped:
+                reward += 400
+                self._grasped = not self._grasped
+
         if self._sparse_reward:
             reward += -(d > self._distance_threshold).astype(np.float32)
         else:
             reward += -d
 
         if d < self._distance_threshold:
-            reward += 1000
+            reward += 4200
+        # print(d)
         return reward
+
+    def _grasp(self):
+        """Determine if the object is grasped"""
+        contacts = tuple()
+        for coni in range(self.sim.data.ncon):
+            # print('  Contact %d:' % (coni,))
+            con = self.sim.data.contact[coni]
+            # print('    geom1    = %d' % (con.geom1,))
+            # print('    geom2    = %d' % (con.geom2,))
+            contacts += ((con.geom1, con.geom2), )
+        if ((38, 2) in contacts or (2, 38) in contacts) and ((33, 2) in contacts or (38, 2) in contacts):
+            return True
+        else:
+            return False
 
     def sample_goal(self):
         """
@@ -143,7 +170,8 @@ class PickAndPlaceEnv(MujocoEnv, Serializable):
         return {
             'observation': obs.copy(),
             'achieved_goal': achieved_goal.copy(),
-            'desired_goal': self._goal
+            'desired_goal': self._goal,
+            'gripper_pos': grip_pos,
         }
 
     @staticmethod
@@ -161,6 +189,7 @@ class PickAndPlaceEnv(MujocoEnv, Serializable):
 
     @overrides
     def reset(self, init_state=None):
+        self._grasped = False
         return super(PickAndPlaceEnv, self).reset(init_state)['observation']
 
     def log_diagnostics(self, paths):
