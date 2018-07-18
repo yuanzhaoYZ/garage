@@ -1,7 +1,10 @@
+import copy
 import os
 import os.path as osp
 import tempfile
+import time
 import warnings
+import glfw
 
 from cached_property import cached_property
 import gym
@@ -17,6 +20,7 @@ from garage.envs.mujoco import utils
 from garage.envs.util import bounds
 from garage.misc import autoargs
 from garage.misc.overrides import overrides
+from mujoco_py.utils import rec_copy, rec_assign
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -81,6 +85,7 @@ class MujocoEnv(gym.Env):
         self.dcom = None
         self.current_com = None
         self.reset()
+        self.render_camera = None
         super(MujocoEnv, self).__init__()
 
     @cached_property
@@ -186,17 +191,16 @@ class MujocoEnv(gym.Env):
             self.viewer = MjViewer(self.sim)
         return self.viewer
 
-    def render(self, close=False, mode='human'):
+    def render(self, close=False, mode='human', camera=None):
         if mode == 'human':
             viewer = self.get_viewer()
             viewer.render()
             return None
         elif mode == 'rgb_array':
-            viewer = self.get_viewer()
-            viewer.render()
-            data, width, height = viewer.get_image()
-            return np.fromstring(
-                data, dtype='uint8').reshape(height, width, 3)[::-1, :, :]
+            width, height = 512, 512
+            img = self.sim.render(width, height, camera_name=self.render_camera)
+            img = img[::-1, :, :]
+            return img
         if close:
             self.stop_viewer()
         return None
