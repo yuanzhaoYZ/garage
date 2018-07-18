@@ -3,6 +3,7 @@ import time
 import tensorflow as tf
 
 from garage.algos import RLAlgorithm
+from garage.envs.util import tf_spec
 import garage.misc.logger as logger
 from garage.tf.plotter import Plotter
 from garage.tf.samplers import BatchSampler
@@ -63,6 +64,7 @@ class BatchPolopt(RLAlgorithm):
         :return:
         """
         self.env = env
+        self.env_spec = tf_spec(env)
         self.policy = policy
         self.baseline = baseline
         self.scope = scope

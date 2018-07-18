@@ -5,13 +5,13 @@ import theano
 from garage.envs.base import EnvSpec
 from garage.misc import ext
 from garage.misc import special
-from garage.spaces import Box as GarageBox
-from garage.spaces import Discrete as GarageDiscrete
-from garage.spaces import Product as GarageProduct
+from garage.tf.spaces import Box
+from garage.tf.spaces import Discrete
+from garage.tf.spaces import Product
 
 __all__ = [
-    'bounds', 'default_value', 'flat_dim', 'flatten', 'flatten_n', 'horizon',
-    'sample', 'spec', 'unflatten', 'unflatten_n', 'weighted_sample',
+    'bounds', 'default_value', 'flat_dim', 'flatten', 'flatten_n', 'sample',
+    'spec', 'unflatten', 'unflatten_n', 'weighted_sample',
     'new_tensor_variable'
 ]
 
@@ -115,20 +115,27 @@ def sample(space):
 
 def spec(env):
     return EnvSpec(
-        observation_space=_to_garage_space(env.observation_space),
-        action_space=_to_garage_space(env.action_space),
+        observation_space=env.observation_space,
+        action_space=env.action_space,
     )
 
 
-def _to_garage_space(space):
+def convert_gym_space(space):
     if isinstance(space, gym.spaces.Box):
-        return GarageBox(low=space.low, high=space.high)
+        return Box(low=space.low, high=space.high)
     elif isinstance(space, gym.spaces.Discrete):
-        return GarageDiscrete(n=space.n)
+        return Discrete(n=space.n)
     elif isinstance(space, gym.spaces.Tuple):
-        return GarageProduct([_to_garage_space(s) for s in space.spaces])
+        return Product([convert_gym_space(x) for x in space.spaces])
     else:
         raise NotImplementedError
+
+
+def tf_spec(env):
+    return EnvSpec(
+        observation_space=convert_gym_space(env.observation_space),
+        action_space=convert_gym_space(env.action_space),
+    )
 
 
 def unflatten(space, obs):
