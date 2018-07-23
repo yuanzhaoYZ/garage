@@ -109,7 +109,7 @@ class PickAndPlaceEnv(MujocoEnv, Serializable):
             # print('    geom1    = %d' % (con.geom1,))
             # print('    geom2    = %d' % (con.geom2,))
             contacts += ((con.geom1, con.geom2), )
-        if ((38, 2) in contacts or (2, 38) in contacts) and ((33, 2) in contacts or (38, 2) in contacts):
+        if ((31, 1) in contacts or (1, 31) in contacts) and ((36, 1) in contacts or (36, 1) in contacts):
             return True
         else:
             return False
