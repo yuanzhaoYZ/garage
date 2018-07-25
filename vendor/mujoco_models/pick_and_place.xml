@@ -35,9 +35,9 @@
     </body>
 
     <body name="task_marker" pos="0.65 0 0">
-      <geom size="0.12 0.01" pos="0 -.3 0" type="cylinder" rgba="0.9 0.4 0.4 1" />
-      <geom size="0.12 0.01" pos="0 0 0" type="cylinder" rgba="0.4 0.9 0.4 1" />
-      <geom size="0.12 0.01" pos="0 .3 0" type="cylinder" rgba="0.4 0.4 0.9 1" />
+      <geom size="0.12 0.01" pos="0 -.3 0" type="cylinder" rgba="0.9 0.4 0.4 1" name="target1" />
+      <geom size="0.12 0.01" pos="0 0 0" type="cylinder" rgba="0.4 0.9 0.4 1" name="target2" />
+      <geom size="0.12 0.01" pos="0 .3 0" type="cylinder" rgba="0.4 0.4 0.9 1" name="target3" />
     </body>
   </worldbody>
 
