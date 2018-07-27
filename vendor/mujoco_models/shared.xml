@@ -13,6 +13,6 @@
     <geom friction="1 0.005 0.001" rgba=".7 .6 .55 1" contype="1" conaffinity="0"/>
   </default>
   <default class='arm'>
-    <!--<joint damping="5"/>-->
+    <joint damping="5"/>
   </default>
 </mujoco>
