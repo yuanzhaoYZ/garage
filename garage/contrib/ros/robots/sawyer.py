@@ -85,6 +85,15 @@ class Sawyer(Robot):
         return intera_interface.RobotEnable(
             intera_interface.CHECK_VERSION).state().enabled
 
+    def set_joint_positions(self, joint_angle_cmds):
+        """
+        Set sawyer limb's joints to specified angels.
+
+        :param joint_angle_cmds: dict{str: float}
+        """
+        if self.safety_predict(joint_angle_cmds):
+            self._limb.set_joint_positions(joint_angle_cmds)
+
     def _set_limb_joint_positions(self, joint_angle_cmds):
         # limit joint angles cmd
         current_joint_angles = self._limb.joint_angles()
@@ -103,8 +112,17 @@ class Sawyer(Robot):
     def _set_limb_joint_torques(self, joint_angle_cmds):
         self._limb.set_joint_torques(joint_angle_cmds)
 
+    def set_gripper_position(self, position):
+        self._set_gripper_position(position)
+
     def _set_gripper_position(self, position):
         self._gripper.set_position(position)
+
+    def move_to_joint_positions(self, joint_positions, timeout=5.0):
+        if rospy.is_shutdown():
+            return
+        self._limb.move_to_joint_positions(joint_positions, timeout=timeout)
+        rospy.sleep(1.0)
 
     def _move_to_start_position(self):
         if rospy.is_shutdown():
