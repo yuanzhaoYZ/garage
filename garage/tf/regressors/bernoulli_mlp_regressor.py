@@ -1,15 +1,17 @@
 import numpy as np
 import tensorflow as tf
+from tensorflow.distributions import Bernoulli
 
 from garage.core import Serializable
 from garage.misc import logger
 from garage.tf.core import LayersPowered
 from garage.tf.core import MLP
 import garage.tf.core.layers as L
-from garage.tf.distributions import Bernoulli
 from garage.tf.misc import tensor_utils
 from garage.tf.optimizers import ConjugateGradientOptimizer
 from garage.tf.optimizers import LbfgsOptimizer
+
+TINY = 1e-8
 
 
 class BernoulliMLPRegressor(LayersPowered, Serializable):
@@ -88,14 +90,19 @@ class BernoulliMLPRegressor(LayersPowered, Serializable):
             p_var = L.get_output(l_p,
                                  {p_network.input_layer: normalized_xs_var})
 
-            old_info_vars = dict(p=old_p_var)
-            info_vars = dict(p=p_var)
+# dist = MultivariateNormGaussian(mean=mean_mlp, std=std_mlp);
+# sample = sess.run(dist.sample(), feed_dict={input1: concrete_input_1, input2=concrete_input_2})
 
-            dist = self._dist = Bernoulli(output_dim)
+# my_mean, my_std = sess.run([mean_mlp, std_mlp], feed_dict={input1: concrete_input_1, input2=concrete_input_2});
+# dist = DiagonalGaussian(); sample = dist.sample(mean=my_mean, std=my_std)
 
-            mean_kl = tf.reduce_mean(dist.kl_sym(old_info_vars, info_vars))
 
-            loss = -tf.reduce_mean(dist.log_likelihood_sym(ys_var, info_vars))
+
+            old_p_dist = tf.distributions.Categorical(probs=tf.convert_to_tensor(old_p_var))
+            p_dist = tf.distributions.Categorical(probs=tf.convert_to_tensor(p_var))
+
+            mean_kl = tf.reduce_mean(tf.distributions.kl_divergence(old_p_dist, p_dist))
+            loss = -tf.reduce_mean(p_dist.log_prob(value=ys_var))
 
             predicted = p_var >= 0.5
 
@@ -159,12 +166,15 @@ class BernoulliMLPRegressor(LayersPowered, Serializable):
         return self.f_predict(np.asarray(xs))
 
     def sample_predict(self, xs):
-        p = self.f_p(xs)
-        return self._dist.sample(dict(p=p))
+        p = np.asarray(self.f_p(xs))
+        return np.cast['int'](
+            np.random.uniform(low=0., high=1., size=p.shape) < p)
 
     def predict_log_likelihood(self, xs, ys):
         p = self.f_p(np.asarray(xs))
-        return self._dist.log_likelihood(np.asarray(ys), dict(p=p))
+        ys = np.asarray(ys)
+        return np.sum(
+            ys * np.log(p + TINY) + (1 - ys) * np.log(1 - p + TINY), axis=-1)
 
     def get_param_values(self, **tags):
         return LayersPowered.get_param_values(self, **tags)
