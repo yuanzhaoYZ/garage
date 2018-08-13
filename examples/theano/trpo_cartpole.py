@@ -1,6 +1,6 @@
 from garage.baselines import LinearFeatureBaseline
-from garage.envs import normalize
 from garage.envs.box2d import CartpoleEnv
+from garage.envs.normalize_env import normalize
 from garage.theano.algos import TRPO
 from garage.theano.envs import TheanoEnv
 from garage.theano.policies import GaussianMLPPolicy

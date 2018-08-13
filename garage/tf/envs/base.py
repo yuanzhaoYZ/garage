@@ -4,7 +4,7 @@ from gym.spaces import Dict as GymDict
 from gym.spaces import Discrete as GymDiscrete
 from gym.spaces import Tuple as GymTuple
 
-from garage.envs import GarageEnv
+from garage.envs.base import GarageEnv
 from garage.envs.env_spec import EnvSpec
 from garage.misc.overrides import overrides
 from garage.tf.spaces import Box

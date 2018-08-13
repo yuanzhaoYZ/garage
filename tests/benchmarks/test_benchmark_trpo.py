@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import tensorflow as tf
 
-from garage.envs import normalize
+from garage.envs.normalized_env import normalize
 from garage.misc import ext
 from garage.misc import logger as garage_logger
 from garage.tf.algos import TRPO

@@ -1,7 +1,7 @@
 import numpy as np
 
 from garage.core import Serializable
-from garage.envs import Step
+from garage.envs.base import Step
 from garage.envs.mujoco import MujocoEnv
 from garage.misc import autoargs
 from garage.misc import logger

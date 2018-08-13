@@ -3,7 +3,7 @@ import sys
 import gym
 
 from garage.baselines import LinearFeatureBaseline
-from garage.envs import normalize
+from garage.envs.normalize_env import normalize
 from garage.misc.instrument import run_experiment
 from garage.misc.instrument import variant
 from garage.misc.instrument import VariantGenerator

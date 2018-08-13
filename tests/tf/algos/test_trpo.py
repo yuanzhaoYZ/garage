@@ -7,7 +7,7 @@ import unittest
 import gym
 import tensorflow as tf
 
-from garage.envs import normalize
+from garage.envs.normalize_env import normalize
 import garage.misc.logger as logger
 from garage.misc.tensorboard_output import TensorBoardOutput
 from garage.tf.algos import TRPO

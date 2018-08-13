@@ -10,7 +10,7 @@ Results:
 """
 import gym
 
-from garage.envs import normalize
+from garage.envs.normalize_env import normalize
 from garage.misc.instrument import run_experiment
 from garage.tf.algos import PPO
 from garage.tf.baselines import GaussianMLPBaseline

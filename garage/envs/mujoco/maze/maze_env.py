@@ -8,7 +8,7 @@ import gym
 import numpy as np
 
 from garage.core import Serializable
-from garage.envs import Step
+from garage.envs.base import Step
 from garage.envs.mujoco.maze.maze_env_utils import construct_maze
 from garage.envs.mujoco.maze.maze_env_utils import point_distance
 from garage.envs.mujoco.maze.maze_env_utils import ray_segment_intersect

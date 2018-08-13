@@ -5,7 +5,7 @@ import mako.lookup
 import mako.template
 import numpy as np
 
-from garage.envs import Step
+from garage.envs.base import Step
 from garage.envs.box2d.box2d_viewer import Box2DViewer
 from garage.envs.box2d.parser.xml_box2d import find_body, find_joint
 from garage.envs.box2d.parser.xml_box2d import world_from_xml

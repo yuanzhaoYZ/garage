@@ -3,7 +3,7 @@ import math
 import numpy as np
 
 from garage.core import Serializable
-from garage.envs import Step
+from garage.envs.base import Step
 from garage.envs.mujoco import MujocoEnv
 from garage.envs.mujoco.mujoco_env import q_inv
 from garage.envs.mujoco.mujoco_env import q_mult

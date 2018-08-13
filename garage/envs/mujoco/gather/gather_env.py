@@ -16,7 +16,7 @@ from mujoco_py.generated.const import CAT_ALL
 import numpy as np
 
 from garage.core import Serializable
-from garage.envs import Step
+from garage.envs.base import Step
 from garage.envs.mujoco.gather.embedded_viewer import EmbeddedViewer
 from garage.envs.mujoco.mujoco_env import BIG
 from garage.envs.mujoco.mujoco_env import MODEL_DIR

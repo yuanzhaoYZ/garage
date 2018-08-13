@@ -1,5 +1,5 @@
-from garage.envs import normalize
 from garage.envs.box2d import CartpoleEnv
+from garage.envs.normalize_env import normalize
 from garage.exploration_strategies import OUStrategy
 from garage.misc.instrument import run_experiment
 from garage.theano.algos import DDPG

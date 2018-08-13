@@ -5,7 +5,7 @@ import gym
 import numpy as np
 
 from garage.core import Serializable
-from garage.envs import Step
+from garage.envs.base import Step
 from garage.envs.dm_control import DmControlViewer
 
 

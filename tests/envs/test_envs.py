@@ -4,16 +4,16 @@ import gym
 from nose2 import tools
 import numpy as np
 
-from garage.envs import DelayedActionEnv
 from garage.envs import GridWorldEnv
 from garage.envs import IdentificationEnv
-from garage.envs import NoisyObservationEnv
 from garage.envs import NormalizedEnv
 from garage.envs.box2d import CarParkingEnv
 from garage.envs.box2d import CartpoleEnv
 from garage.envs.box2d import CartpoleSwingupEnv
 from garage.envs.box2d import DoublePendulumEnv
 from garage.envs.box2d import MountainCarEnv
+from garage.envs.noisy_env import DelayedActionEnv
+from garage.envs.noisy_env import NoisyObservationEnv
 
 MUJOCO_ENABLED = True
 try:

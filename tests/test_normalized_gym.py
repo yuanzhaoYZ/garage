@@ -2,7 +2,7 @@ import unittest
 
 import gym
 
-from garage.envs import normalize
+from garage.envs.normalize_env import normalize
 from garage.theano.envs import TheanoEnv
 
 
