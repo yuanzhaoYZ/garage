@@ -142,6 +142,7 @@ hash brew 2>/dev/null || {
 
 # For installing garage: bzip2, git, glfw, unzip, wget
 # For building glfw: cmake
+# For building mujoco-py: gcc
 # Required for OpenAI gym: cmake boost boost-python ffmpeg sdl2 swig wget
 # Required for OpenAI baselines: cmake openmpi
 brew update
@@ -152,6 +153,7 @@ brew install \
   unzip \
   wget \
   cmake \
+  gcc@7 --without-multilib \
   boost \
   boost-python \
   ffmpeg \
@@ -184,10 +186,12 @@ fi
 # Set up conda
 hash conda 2>/dev/null || {
   CONDA_INSTALLER="$(mktemp -d)/miniconda.sh"
-  sudo chmod u+x "${CONDA_INSTALLER}"
+  # sudo chmod u+x "${CONDA_INSTALLER}"
+  chmod u+x "${CONDA_INSTALLER}"
   wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh \
     -O "${CONDA_INSTALLER}"
-  sudo bash "${CONDA_INSTALLER}" -b
+  # sudo bash "${CONDA_INSTALLER}" -b
+  bash "${CONDA_INSTALLER}" -b
   # Add conda to executable programs
   CONDA_PATH="${HOME}/miniconda2/bin/"
   export PATH="$PATH:${CONDA_PATH}"
@@ -226,7 +230,7 @@ source deactivate
 export PYTHONPATH="$PYTHONPATH:${GARAGE_DIR}"
 PYTHON_ENV_VAR="PYTHONPATH=\"\$PYTHONPATH:${GARAGE_DIR}\""
 if [[ "${_arg_set_envvar}" = on ]]; then
-  echo "export ${PYTHON_ENV_VAR}" >> "${BASH_RC}"
+  echo "export ${PYTHON_ENV_VAR}" >> "${BASH_PROF}"
 else
   echo -e "\nRemember to export the following environment variables before" \
     "running garage:"

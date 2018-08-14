@@ -1,85 +1,100 @@
 language: python
 
-services:
-  - docker
+matrix:
+  include:
+    - os: linux
+      sudo: required
+      python: 3.6.6
+      env: TOXENV=py32
+    - os: osx
+      language: generic
+      env: TOXENV=py32
 
-addons:
-  apt:
-    packages:
-      - docker-ce
-
-python:
-  - "3.6.6"
+# services:
+#   - docker
+#
+# addons:
+#   apt:
+#     packages:
+#       - docker-ce
+#
+# python:
+#   - "3.6.6"
 
 git:
   depth: false
 
 before_install:
   # Reconfigure docker to be more efficient
-  - |
-    echo '{
-      "experimental": true,
-      "storage-driver": "overlay2",
-      "max-concurrent-downloads": 50,
-      "max-concurrent-uploads": 50
-    }' | sudo tee /etc/docker/daemon.json
-  - sudo service docker restart
+  #  - |
+  #    echo '{
+  #      "experimental": true,
+  #      "storage-driver": "overlay2",
+  #      "max-concurrent-downloads": 50,
+  #      "max-concurrent-uploads": 50
+  #    }' | sudo tee /etc/docker/daemon.json
+  #  - sudo service docker restart
   # prevent garage from exiting on config
   - cp garage/config_personal_template.py garage/config_personal.py
   # Pull cached docker image
-  - docker pull rlworkgroup/garage-ci:latest
+  # - docker pull rlworkgroup/garage-ci:latest
 
 install:
-  - tag="rlworkgroup/garage-ci:${TRAVIS_BUILD_NUMBER}"
-  - |
-    docker build \
-      -f docker/Dockerfile.ci \
-      --cache-from rlworkgroup/garage-ci:latest \
-      --build-arg MJKEY="${MJKEY}" \
-      -t "${tag}" \
-      .
+  - echo "${MJKEY}" > ./mjkey.txt
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then bash ./scripts/setup_osx.sh ./mjkey.txt --set-envvar; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then bash ./scripts/setup_linux.sh ./mjkey.txt --set-envvar ; fi
+#  - tag="rlworkgroup/garage-ci:${TRAVIS_BUILD_NUMBER}"
+#  - |
+#    docker build \
+#      -f docker/Dockerfile.ci \
+#      --cache-from rlworkgroup/garage-ci:latest \
+#      --build-arg MJKEY="${MJKEY}" \
+#      -t "${tag}" \
+#      .
 
 script:
-  - |
-    docker run \
-      -e TRAVIS_BRANCH \
-      -e TRAVIS_PULL_REQUEST \
-      -e TRAVIS_COMMIT_RANGE \
-      -e TRAVIS \
-      -e MJKEY \
-      "${tag}" scripts/travisci/check_flake8.sh
-  - |
-    docker run \
-      -e TRAVIS_BRANCH \
-      -e TRAVIS_PULL_REQUEST \
-      -e TRAVIS_COMMIT_RANGE \
-      -e TRAVIS \
-      -e MJKEY \
-      "${tag}" scripts/travisci/check_imports.sh
-  - |
-    docker run \
-      -e TRAVIS_BRANCH \
-      -e TRAVIS_PULL_REQUEST \
-      -e TRAVIS_COMMIT_RANGE \
-      -e TRAVIS \
-      -e MJKEY \
-      "${tag}" scripts/travisci/check_precommit.sh
-  - |
-    docker run \
-      -e TRAVIS_BRANCH \
-      -e TRAVIS_PULL_REQUEST \
-      -e TRAVIS_COMMIT_RANGE \
-      -e TRAVIS \
-      -e MJKEY \
-      "${tag}" nose2 -c setup.cfg -E 'not huge'
+  - source activate garage
+  - bash ./scripts/travisci/check_flake8.sh
+#  - |
+#    docker run \
+#      -e TRAVIS_BRANCH \
+#      -e TRAVIS_PULL_REQUEST \
+#      -e TRAVIS_COMMIT_RANGE \
+#      -e TRAVIS \
+#      -e MJKEY \
+#      "${tag}" scripts/travisci/check_flake8.sh
+#  - |
+#    docker run \
+#      -e TRAVIS_BRANCH \
+#      -e TRAVIS_PULL_REQUEST \
+#      -e TRAVIS_COMMIT_RANGE \
+#      -e TRAVIS \
+#      -e MJKEY \
+#      "${tag}" scripts/travisci/check_imports.sh
+#  - |
+#    docker run \
+#      -e TRAVIS_BRANCH \
+#      -e TRAVIS_PULL_REQUEST \
+#      -e TRAVIS_COMMIT_RANGE \
+#      -e TRAVIS \
+#      -e MJKEY \
+#      "${tag}" scripts/travisci/check_precommit.sh
+#  - |
+#    docker run \
+#      -e TRAVIS_BRANCH \
+#      -e TRAVIS_PULL_REQUEST \
+#      -e TRAVIS_COMMIT_RANGE \
+#      -e TRAVIS \
+#      -e MJKEY \
+#      "${tag}" nose2 -c setup.cfg -E 'not huge'
 
-after_success:
-  - |
-    if [[ "${TRAVIS_BRANCH}" == "master" ]] && [[ "${TRAVIS_PULL_REQUEST}" == "false" ]]; then
-      echo "${DOCKER_API_KEY}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
-      docker tag "${tag}" rlworkgroup/garage-ci:latest
-      docker push rlworkgroup/garage-ci
-    fi
+#after_success:
+#  - |
+#    if [[ "${TRAVIS_BRANCH}" == "master" ]] && [[ "${TRAVIS_PULL_REQUEST}" == "false" ]]; then
+#      echo "${DOCKER_API_KEY}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+#      docker tag "${tag}" rlworkgroup/garage-ci:latest
+#      docker push rlworkgroup/garage-ci
+#    fi
 
 notifications:
   email: false

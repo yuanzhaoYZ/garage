@@ -136,8 +136,10 @@ BASH_RC="${HOME}/.bashrc"
 # Required for OpenAI baselines: libopenmpi-dev, openmpi-bin
 echo "Installing garage dependencies"
 echo "You will probably be asked for your sudo password"
-sudo apt -y -q update
-sudo apt install -y \
+# sudo apt -y -q update
+apt -y -q update
+# sudo apt install -y \
+apt install -y \
   wget \
   bzip2 \
   unzip \
@@ -157,7 +159,8 @@ sudo apt install -y \
 
 # Build GLFW because the Ubuntu 16.04 version is too old
 # See https://github.com/glfw/glfw/issues/1004
-sudo apt purge -y libglfw*
+# sudo apt purge -y libglfw*
+apt purge -y libglfw*
 GLFW_DIR="$(mktemp -d)/glfw"
 git clone https://github.com/glfw/glfw.git "${GLFW_DIR}"
 cd "${GLFW_DIR}"
@@ -195,10 +198,12 @@ fi
 # Set up conda
 hash conda 2>/dev/null || {
   CONDA_INSTALLER="$(mktemp --suffix=_miniconda.sh)"
-  sudo chmod u+x "${CONDA_INSTALLER}"
+  # sudo chmod u+x "${CONDA_INSTALLER}"
+  chmod u+x "${CONDA_INSTALLER}"
   wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh \
     -O "${CONDA_INSTALLER}"
-  sudo bash "${CONDA_INSTALLER}" -b
+  # sudo bash "${CONDA_INSTALLER}" -b
+  bash "${CONDA_INSTALLER}" -b
   # Add conda to executable programs
   CONDA_PATH="${HOME}/miniconda2/bin/"
   export PATH="$PATH:${CONDA_PATH}"
