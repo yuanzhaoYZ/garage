@@ -1,85 +1,47 @@
-language: python
+# See https://github.com/travis-ci/travis-ci/issues/7587
 
-services:
-  - docker
-
-addons:
-  apt:
-    packages:
-      - docker-ce
-
-python:
-  - "3.6.6"
-
-git:
-  depth: false
+matrix:
+  include:
+    - {osx_image: xcode10, os: osx}
+    - {osx_image: xcode9.4, os: osx}
+    - {osx_image: xcode9.3, os: osx}
+    - {osx_image: xcode9.2, os: osx}
+    - {osx_image: xcode9.1, os: osx}
+    - {osx_image: xcode9, os: osx}
+    - {osx_image: xcode8.3, os: osx}
+    - {osx_image: xcode8, os: osx}
+    - {osx_image: xcode7.3, os: osx}
+    - {osx_image: xcode6.4, os: osx}
 
 before_install:
-  # Reconfigure docker to be more efficient
-  - |
-    echo '{
-      "experimental": true,
-      "storage-driver": "overlay2",
-      "max-concurrent-downloads": 50,
-      "max-concurrent-uploads": 50
-    }' | sudo tee /etc/docker/daemon.json
-  - sudo service docker restart
   # prevent garage from exiting on config
   - cp garage/config_personal_template.py garage/config_personal.py
-  # Pull cached docker image
-  - docker pull rlworkgroup/garage-ci:latest
+  - echo "${MJKEY}" > mjkey.txt
+  # clear pre-installed homebrew packages
+  # - brew list -1 | xargs brew uninstall
+  # Uninstall oclint which conflicts with GCC
+  # See https://github.com/travis-ci/travis-ci/issues/8826
+  - brew cask uninstall oclint
+  # Install updated XCode CLT
+  # See https://github.com/travis-ci/travis-ci/issues/9640
+  - if [ "${TRAVIS_OSX_IMAGE}" = "xcode9.4" ]; then ( sudo softwareupdate -i "Command Line Tools (macOS High Sierra version 10.13) for Xcode-9.4" )& fi
+  - if [ "${TRAVIS_OSX_IMAGE}" = "xcode9.3" ]; then ( sudo softwareupdate -i "Command Line Tools (macOS High Sierra version 10.13) for Xcode-9.3" )& fi
+  # Start Xvfb
+  # See https://github.com/travis-ci/travis-ci/issues/7313#issuecomment-279914149
+  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then ( sudo Xvfb :99 -ac -screen 0 1024x768x16 +iglx; echo ok )& fi
+  - export DISPLAY=:99
 
 install:
-  - tag="rlworkgroup/garage-ci:${TRAVIS_BUILD_NUMBER}"
-  - |
-    docker build \
-      -f docker/Dockerfile.ci \
-      --cache-from rlworkgroup/garage-ci:latest \
-      --build-arg MJKEY="${MJKEY}" \
-      -t "${tag}" \
-      .
+  - bash scripts/setup_osx.sh --mjkey mjkey.txt --modify-bashrc
+
+before_script:
+  - source ${HOME}/.bash_profile
+  - . ${HOME}/miniconda2/etc/profile.d/conda.sh
+  - conda activate garage
+  - export DISABLE_MUJOCO_RENDERING=1
 
 script:
-  - |
-    docker run \
-      -e TRAVIS_BRANCH \
-      -e TRAVIS_PULL_REQUEST \
-      -e TRAVIS_COMMIT_RANGE \
-      -e TRAVIS \
-      -e MJKEY \
-      "${tag}" scripts/travisci/check_flake8.sh
-  - |
-    docker run \
-      -e TRAVIS_BRANCH \
-      -e TRAVIS_PULL_REQUEST \
-      -e TRAVIS_COMMIT_RANGE \
-      -e TRAVIS \
-      -e MJKEY \
-      "${tag}" scripts/travisci/check_imports.sh
-  - |
-    docker run \
-      -e TRAVIS_BRANCH \
-      -e TRAVIS_PULL_REQUEST \
-      -e TRAVIS_COMMIT_RANGE \
-      -e TRAVIS \
-      -e MJKEY \
-      "${tag}" scripts/travisci/check_precommit.sh
-  - |
-    docker run \
-      -e TRAVIS_BRANCH \
-      -e TRAVIS_PULL_REQUEST \
-      -e TRAVIS_COMMIT_RANGE \
-      -e TRAVIS \
-      -e MJKEY \
-      "${tag}" nose2 -c setup.cfg -E 'not huge'
-
-after_success:
-  - |
-    if [[ "${TRAVIS_BRANCH}" == "master" ]] && [[ "${TRAVIS_PULL_REQUEST}" == "false" ]]; then
-      echo "${DOCKER_API_KEY}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
-      docker tag "${tag}" rlworkgroup/garage-ci:latest
-      docker push rlworkgroup/garage-ci
-    fi
+  - nose2 -c setup.cfg -E 'not huge'
 
 notifications:
   email: false

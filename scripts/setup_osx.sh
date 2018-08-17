@@ -109,25 +109,25 @@ print_warning() {
 # Obtain the OS X version
 VER="$(sw_vers -productVersion)"
 
-if [[ ! " ${VERIFIED_OSX_VERSIONS[@]} " =~ " ${VER} " ]]; then
-  print_warning "You are attempting to install garage on a version of OS X" \
-    "which we have not verified is working." | fold -s
-  print_warning "\ngarage relies on community contributions to support OS X\n"
-  print_warning "If this installation is successful, please add your OS X" \
-    "version to VERIFIED_OSX_VERSIONS to" \
-    "https://github.com/rlworkgroup/garage/blob/master/scripts/setup_osx.sh" \
-    "on GitHub and submit a pull request to rlworkgroup/garage to help out" \
-    "future users. If the installation is not initially successful, but you" \
-    "find changes which fix it, please help us out by submitting a PR with" \
-    "your updates to the setup script." \
-    | fold -s
-  while [[ "${continue_var}" != "y" ]]; do
-    read -p "Continue? (y/n): " continue_var
-    if [[ "${continue_var}" = "n" ]]; then
-      exit
-    fi
-  done
-fi
+# if [[ ! " ${VERIFIED_OSX_VERSIONS[@]} " =~ " ${VER} " ]]; then
+#   print_warning "You are attempting to install garage on a version of OS X" \
+#     "which we have not verified is working." | fold -s
+#   print_warning "\ngarage relies on community contributions to support OS X\n"
+#   print_warning "If this installation is successful, please add your OS X" \
+#     "version to VERIFIED_OSX_VERSIONS to" \
+#     "https://github.com/rlworkgroup/garage/blob/master/scripts/setup_osx.sh" \
+#     "on GitHub and submit a pull request to rlworkgroup/garage to help out" \
+#     "future users. If the installation is not initially successful, but you" \
+#     "find changes which fix it, please help us out by submitting a PR with" \
+#     "your updates to the setup script." \
+#     | fold -s
+#   while [[ "${continue_var}" != "y" ]]; do
+#     read -p "Continue? (y/n): " continue_var
+#     if [[ "${continue_var}" = "n" ]]; then
+#       exit
+#     fi
+#   done
+# fi
 
 # Verify there's a file in the mjkey path
 test -f "${_arg_mjkey}" || _PRINT_HELP=yes die \
@@ -144,8 +144,8 @@ BASH_PROF="${HOME}/.bash_profile"
 echo "Installing garage dependencies"
 
 # Homebrew is required first to install the other dependencies
+# Install the Xcode Command Line Tools
 hash brew 2>/dev/null || {
-  # Install the Xcode Command Line Tools
   xcode-select --install
   # Install Homebrew
   /usr/bin/ruby -e "$(curl -fsSL \
@@ -159,7 +159,7 @@ hash brew 2>/dev/null || {
 brew update
 set +e
 brew install \
-  gcc@6 --without-multilib \
+  gcc@7 \
   bzip2 \
   git \
   glfw \
