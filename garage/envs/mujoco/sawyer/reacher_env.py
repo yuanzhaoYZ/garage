@@ -47,10 +47,10 @@ class ReacherEnv(SawyerEnv):
         achieved_goal = gripper_pos
         desired_goal = self._goal_configuration.gripper_pos
 
-        achieved_goal_qpos = np.concatenate((achieved_goal, [1, 0, 0, 0]))
-        self.sim.data.set_joint_qpos('achieved_goal:joint', achieved_goal_qpos)
-        desired_goal_qpos = np.concatenate((desired_goal, [1, 0, 0, 0]))
-        self.sim.data.set_joint_qpos('desired_goal:joint', desired_goal_qpos)
+        # achieved_goal_qpos = np.concatenate((achieved_goal, [1, 0, 0, 0]))
+        # self.sim.data.set_joint_qpos('achieved_goal:joint', achieved_goal_qpos)
+        # desired_goal_qpos = np.concatenate((desired_goal, [1, 0, 0, 0]))
+        # self.sim.data.set_joint_qpos('desired_goal:joint', desired_goal_qpos)
 
         return {
             'observation': obs,

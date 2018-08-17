@@ -3,12 +3,13 @@ import numpy as np
 from garage.envs.mujoco.sawyer.sawyer_env import SawyerEnv
 from garage.envs.mujoco.sawyer.sawyer_env import Configuration
 from garage.envs.mujoco.sawyer.sawyer_env import SawyerEnvWrapper
+from garage.core.serializable import Serializable
 
 
 class PusherEnv(SawyerEnv):
 
     def __init__(self,
-                 goal_position,
+                 goal_position=None,
                  start_position=None,
                  **kwargs):
         def generate_start_goal():
@@ -21,7 +22,12 @@ class PusherEnv(SawyerEnv):
                 gripper_pos=start_position,
                 gripper_state=1,
                 object_grasped=False,
-                object_pos=(0.8, 0, 0))
+                object_pos=(0.65, 0.04, 0.04))
+
+            nonlocal goal_position
+            if goal_position is None:
+                goal_position = (0.9, 0.04, 0.04)
+
             goal = Configuration(
                 gripper_pos=goal_position,
                 gripper_state=1,
@@ -40,17 +46,17 @@ class PusherEnv(SawyerEnv):
         if self._control_method == 'task_space_control':
             obs = np.concatenate([gripper_pos, self.object_pos])
         elif self._control_method == 'position_control':
-            obs = np.concatenate([self.joint_positions, self.object_position])
+            obs = np.concatenate([self.joint_positions[2:], gripper_pos, self.object_position])
         else:
             raise NotImplementedError
 
         achieved_goal = self.object_position
         desired_goal = self._goal_configuration.object_pos
 
-        achieved_goal_qpos = np.concatenate((achieved_goal, [1, 0, 0, 0]))
-        self.sim.data.set_joint_qpos('achieved_goal:joint', achieved_goal_qpos)
-        desired_goal_qpos = np.concatenate((desired_goal, [1, 0, 0, 0]))
-        self.sim.data.set_joint_qpos('desired_goal:joint', desired_goal_qpos)
+        # achieved_goal_qpos = np.concatenate((achieved_goal, [1, 0, 0, 0]))
+        # self.sim.data.set_joint_qpos('achieved_goal:joint', achieved_goal_qpos)
+        # desired_goal_qpos = np.concatenate((desired_goal, [1, 0, 0, 0]))
+        # self.sim.data.set_joint_qpos('desired_goal:joint', desired_goal_qpos)
 
         return {
             'observation': obs,
@@ -62,11 +68,19 @@ class PusherEnv(SawyerEnv):
             'object_pos': achieved_goal,
         }
 
-    def compute_reward(env, achieved_goal, desired_goal, info):
-        d = np.linalg.norm(achieved_goal - desired_goal, axis=-1)
-        if env._reward_type == 'sparse':
-            return (d < env._distance_threshold).astype(np.float32)
+    def compute_reward(self, achieved_goal, desired_goal, info):
+        gripper_reward = np.linalg.norm(self.object_position - self.gripper_position, axis=-1)
+        block_reward = np.linalg.norm(self.object_position - self._goal_configuration.object_pos, axis=-1)
+        reward = 0.3 * gripper_reward + 0.7 * block_reward # + ori_penalty
+        if self._reward_type == 'sparse':
+            return (reward < self._distance_threshold).astype(np.float32)
 
-        return 1 - np.exp(d)
+        return - reward
 
 
+class SimplePusherEnv(SawyerEnvWrapper, Serializable):
+    def __init__(self, *args, **kwargs):
+        Serializable.quick_init(self, locals())
+        self.reward_range = None
+        self.metadata = None
+        super().__init__(PusherEnv(*args, **kwargs))

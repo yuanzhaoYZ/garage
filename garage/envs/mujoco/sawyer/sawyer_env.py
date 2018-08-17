@@ -100,38 +100,38 @@ COLLISION_WHITELIST = [
     # ("mocap", "r_gripper_r_finger_tip"),
     # ("mocap", "r_gripper_l_finger"),
     # ("mocap", "r_gripper_l_finger_tip"),
-    ("achieved_goal", "right_l0"),
-    ("achieved_goal", "right_l1"),
-    ("achieved_goal", "right_l1_2"),
-    ("achieved_goal", "right_l2"),
-    ("achieved_goal", "right_l2_2"),
-    ("achieved_goal", "right_l3"),
-    ("achieved_goal", "right_l4"),
-    ("achieved_goal", "right_l4_2"),
-    ("achieved_goal", "right_l5"),
-    ("achieved_goal", "right_l6"),
-    ("achieved_goal", "right_gripper_base"),
-    ("achieved_goal", "right_hand"),
-    ("achieved_goal", "r_gripper_r_finger"),
-    ("achieved_goal", "r_gripper_r_finger_tip"),
-    ("achieved_goal", "r_gripper_l_finger"),
-    ("achieved_goal", "r_gripper_l_finger_tip"),
-    ("desired_goal", "right_l0"),
-    ("desired_goal", "right_l1"),
-    ("desired_goal", "right_l1_2"),
-    ("desired_goal", "right_l2"),
-    ("desired_goal", "right_l2_2"),
-    ("desired_goal", "right_l3"),
-    ("desired_goal", "right_l4"),
-    ("desired_goal", "right_l4_2"),
-    ("desired_goal", "right_l5"),
-    ("desired_goal", "right_l6"),
-    ("desired_goal", "right_gripper_base"),
-    ("desired_goal", "right_hand"),
-    ("desired_goal", "r_gripper_r_finger"),
-    ("desired_goal", "r_gripper_r_finger_tip"),
-    ("desired_goal", "r_gripper_l_finger"),
-    ("desired_goal", "r_gripper_l_finger_tip"),
+    # ("achieved_goal", "right_l0"),
+    # ("achieved_goal", "right_l1"),
+    # ("achieved_goal", "right_l1_2"),
+    # ("achieved_goal", "right_l2"),
+    # ("achieved_goal", "right_l2_2"),
+    # ("achieved_goal", "right_l3"),
+    # ("achieved_goal", "right_l4"),
+    # ("achieved_goal", "right_l4_2"),
+    # ("achieved_goal", "right_l5"),
+    # ("achieved_goal", "right_l6"),
+    # ("achieved_goal", "right_gripper_base"),
+    # ("achieved_goal", "right_hand"),
+    # ("achieved_goal", "r_gripper_r_finger"),
+    # ("achieved_goal", "r_gripper_r_finger_tip"),
+    # ("achieved_goal", "r_gripper_l_finger"),
+    # ("achieved_goal", "r_gripper_l_finger_tip"),
+    # ("desired_goal", "right_l0"),
+    # ("desired_goal", "right_l1"),
+    # ("desired_goal", "right_l1_2"),
+    # ("desired_goal", "right_l2"),
+    # ("desired_goal", "right_l2_2"),
+    # ("desired_goal", "right_l3"),
+    # ("desired_goal", "right_l4"),
+    # ("desired_goal", "right_l4_2"),
+    # ("desired_goal", "right_l5"),
+    # ("desired_goal", "right_l6"),
+    # ("desired_goal", "right_gripper_base"),
+    # ("desired_goal", "right_hand"),
+    # ("desired_goal", "r_gripper_r_finger"),
+    # ("desired_goal", "r_gripper_r_finger_tip"),
+    # ("desired_goal", "r_gripper_l_finger"),
+    # ("desired_goal", "r_gripper_l_finger_tip"),
 ]
 
 Configuration = namedtuple(
@@ -295,7 +295,7 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
 
     @property
     def object_position(self):
-        return self.sim.data.get_site_xpos('object0')
+        return self.sim.data.get_geom_xpos('object0')
 
     @property
     def has_object(self):
@@ -327,7 +327,7 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
                 dtype=np.float32)
         elif self._control_method == 'position_control':
             return Box(
-                low=np.full(9, -0.04), high=np.full(9, 0.04), dtype=np.float32)
+                low=np.full(7, -0.04), high=np.full(7, 0.04), dtype=np.float32)
         else:
             raise NotImplementedError
 
@@ -366,22 +366,26 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
             curr_pos = self.joint_positions
 
             next_pos = np.clip(
-                a + curr_pos,
-                self.joint_position_space.low,
-                self.joint_position_space.high
+                a + curr_pos[2:],
+                self.joint_position_space.low[2:],
+                self.joint_position_space.high[2:]
             )
-            self.sim.data.ctrl[:] = next_pos
-            for _ in range(20):
-                self.sim.data.ctrl[:] = next_pos
+            # next_pos = a + curr_pos
+            self.sim.data.ctrl[2:] = next_pos
+            self.sim.forward()
+            for _ in range(10):
                 self.sim.step()
-                self.sim.forward()            
+            # curr_pos = self.joint_positions[2:]
+            # d = np.linalg.norm(curr_pos - next_pos)
+            # print(d)
+            # assert d < 0.05
         else:
             raise NotImplementedError
         self._step += 1
 
         obs = self.get_obs()
-        self._achieved_goal = obs.get('achieved_goal')
-        self._desired_goal = self._goal_configuration.gripper_pos
+        self._achieved_goal = self.object_position
+        self._desired_goal = self._goal_configuration.object_pos
 
         # collision checking is expensive so cache the value
         in_collision = self.in_collision
@@ -397,7 +401,7 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
         }
 
         r = self.compute_reward(
-            achieved_goal=obs.get('achieved_goal'),
+            achieved_goal=self._achieved_goal,
             desired_goal=self._desired_goal,
             info=info)
 
@@ -406,7 +410,7 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
         done = False
 
         # control cost
-        r -= self._control_cost_coeff * np.linalg.norm(a)
+        # r -= self._control_cost_coeff * np.linalg.norm(a)
 
         # collision detection
         if in_collision:
@@ -464,10 +468,10 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
         achieved_goal = self._achieved_goal_fn(self)
         desired_goal = self._desired_goal_fn(self)
 
-        achieved_goal_qpos = np.concatenate((achieved_goal, [1, 0, 0, 0]))
-        self.sim.data.set_joint_qpos('achieved_goal:joint', achieved_goal_qpos)
-        desired_goal_qpos = np.concatenate((desired_goal, [1, 0, 0, 0]))
-        self.sim.data.set_joint_qpos('desired_goal:joint', desired_goal_qpos)
+        # achieved_goal_qpos = np.concatenate((achieved_goal, [1, 0, 0, 0]))
+        # self.sim.data.set_joint_qpos('achieved_goal:joint', achieved_goal_qpos)
+        # desired_goal_qpos = np.concatenate((desired_goal, [1, 0, 0, 0]))
+        # self.sim.data.set_joint_qpos('desired_goal:joint', desired_goal_qpos)
 
         return {
             'observation': obs,
@@ -531,6 +535,12 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
                 self.joint_positions = self.joint_position_space.sample()
                 self.sim.forward()
                 attempts += 1
+        else:
+            self.sim.data.ctrl[:] = np.array([0., 0., -0.68198394, -0.96920825, 0.76964638, 2.00488611,
+                            -0.56956307, 0.76115281, -0.9716932])        
+            self.sim.forward()
+            for _ in range(100):
+                self.sim.step()
 
         return self.get_obs()
 
