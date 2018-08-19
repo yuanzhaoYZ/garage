@@ -1,3 +1,4 @@
+from gym.envs.robotics import rotations
 import numpy as np
 
 from garage.envs.mujoco.sawyer.sawyer_env import SawyerEnv
@@ -22,7 +23,7 @@ class PusherEnv(SawyerEnv):
                 gripper_pos=start_position,
                 gripper_state=1,
                 object_grasped=False,
-                object_pos=(0.65, 0.04, 0.04))
+                object_pos=(0.7, 0.04, 0.04))
 
             nonlocal goal_position
             if goal_position is None:
@@ -53,11 +54,6 @@ class PusherEnv(SawyerEnv):
         achieved_goal = self.object_position
         desired_goal = self._goal_configuration.object_pos
 
-        # achieved_goal_qpos = np.concatenate((achieved_goal, [1, 0, 0, 0]))
-        # self.sim.data.set_joint_qpos('achieved_goal:joint', achieved_goal_qpos)
-        # desired_goal_qpos = np.concatenate((desired_goal, [1, 0, 0, 0]))
-        # self.sim.data.set_joint_qpos('desired_goal:joint', desired_goal_qpos)
-
         return {
             'observation': obs,
             'achieved_goal': achieved_goal,
@@ -69,13 +65,29 @@ class PusherEnv(SawyerEnv):
         }
 
     def compute_reward(self, achieved_goal, desired_goal, info):
-        gripper_reward = np.linalg.norm(self.object_position - self.gripper_position, axis=-1)
-        block_reward = np.linalg.norm(self.object_position - self._goal_configuration.object_pos, axis=-1)
-        reward = 0.3 * gripper_reward + 0.7 * block_reward # + ori_penalty
-        if self._reward_type == 'sparse':
-            return (reward < self._distance_threshold).astype(np.float32)
+        gripper_penalty = np.linalg.norm(self.object_position - self.gripper_position, axis=-1)
+        block_penalty = np.linalg.norm(self.object_position - self._goal_configuration.object_pos, axis=-1)
+        
+        # Force the direction of the gripper
+        upright_gripper = np.array([np.pi, 0, np.pi])
+        gripper_rot = rotations.mat2euler(self.sim.data.get_site_xmat('grip'))
+        gripper_norot = np.linalg.norm(np.sin(upright_gripper) - np.sin(gripper_rot))  
 
-        return - reward
+        # Block rotation 
+
+        
+
+
+        d = block_penalty
+        if self._reward_type == 'sparse':
+            return (d < self._distance_threshold).astype(np.float32)
+
+        assert gripper_penalty > 0
+        assert block_penalty > 0
+        assert - (0.2 * gripper_penalty + block_penalty) < 0, "{}, {}".format(gripper_penalty, block_penalty)
+
+        # return - (3 * block_penalty + gripper_penalty + 0.3 * gripper_norot)
+        return - gripper_penalty - 1.2 * block_penalty
 
 
 class SimplePusherEnv(SawyerEnvWrapper, Serializable):

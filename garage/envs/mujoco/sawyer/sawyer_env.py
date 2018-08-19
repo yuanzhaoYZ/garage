@@ -289,9 +289,17 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
         #     [0., 0., .1])  # 0.1 offset for the finger
         return self.sim.data.get_body_xpos("r_gripper_r_finger_tip")
 
+    def force_object_down(self):
+        curr_position = self.object_position
+        modified_position = np.concatenate([curr_position[:2], [0.04]])
+        self.set_object_position(modified_position)
+        self.sim.forward()
+
     def set_object_position(self, position):
-        object_qpos = np.concatenate((position, [1, 0, 0, 0]))
-        self.sim.data.set_joint_qpos('object0:joint', object_qpos)
+        # object_qpos = np.concatenate((position, [1, 0, 0, 0]))
+        # self.sim.data.set_joint_qpos('object0:joint', object_qpos)
+        self.sim.data.set_joint_qpos("object0:joint1", position[0])
+        self.sim.data.set_joint_qpos("object0:joint2", position[1])
 
     @property
     def object_position(self):
@@ -327,7 +335,7 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
                 dtype=np.float32)
         elif self._control_method == 'position_control':
             return Box(
-                low=np.full(7, -0.04), high=np.full(7, 0.04), dtype=np.float32)
+                low=np.full(7, -0.02), high=np.full(7, 0.02), dtype=np.float32)
         else:
             raise NotImplementedError
 
@@ -370,19 +378,16 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
                 self.joint_position_space.low[2:],
                 self.joint_position_space.high[2:]
             )
-            # next_pos = a + curr_pos
-            self.sim.data.ctrl[2:] = next_pos
-            self.sim.forward()
-            for _ in range(10):
+            for _ in range(4):
+                self.sim.data.ctrl[2:] = next_pos
+                self.sim.forward()
                 self.sim.step()
-            # curr_pos = self.joint_positions[2:]
-            # d = np.linalg.norm(curr_pos - next_pos)
+            # d = np.linalg.norm(self.joint_positions[2:] - next_pos, axis=-1)
             # print(d)
-            # assert d < 0.05
         else:
             raise NotImplementedError
         self._step += 1
-
+        
         obs = self.get_obs()
         self._achieved_goal = self.object_position
         self._desired_goal = self._goal_configuration.object_pos
@@ -521,7 +526,7 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
 
         self._sample_start_goal()
         self.set_object_position(self._start_configuration.object_pos)
-
+        self.sim.forward()
         attempts = 1
         if self._randomize_start_jpos:
             self.joint_positions = self.joint_position_space.sample()
@@ -536,8 +541,8 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
                 self.sim.forward()
                 attempts += 1
         else:
-            self.sim.data.ctrl[:] = np.array([0., 0., -0.68198394, -0.96920825, 0.76964638, 2.00488611,
-                            -0.56956307, 0.76115281, -0.9716932])        
+            self.sim.data.ctrl[:] = np.array([0., 0., -0.140923828125, -1.2789248046875, -3.043166015625,
+                    -2.139623046875, -0.047607421875, -0.7052822265625, -1.4102060546875,])        
             self.sim.forward()
             for _ in range(100):
                 self.sim.step()
