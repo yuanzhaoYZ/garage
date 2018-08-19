@@ -40,6 +40,7 @@ class PusherEnv(SawyerEnv):
         SawyerEnv.__init__(self,
                            start_goal_config=generate_start_goal,
                            file_path="pusher.xml",
+                           free_object=False,
                            **kwargs)
 
     def get_obs(self):
@@ -51,17 +52,17 @@ class PusherEnv(SawyerEnv):
         else:
             raise NotImplementedError
 
-        achieved_goal = self.object_position
-        desired_goal = self._goal_configuration.object_pos
+        self._achieved_goal = self.object_position
+        self._desired_goal = self._goal_configuration.object_pos
 
         return {
             'observation': obs,
-            'achieved_goal': achieved_goal,
-            'desired_goal': desired_goal,
+            'achieved_goal': self._achieved_goal,
+            'desired_goal': self._desired_goal,
             'has_object': False,
             'gripper_state': self.gripper_state,
             'gripper_pos': gripper_pos,
-            'object_pos': achieved_goal,
+            'object_pos': self._achieved_goal,
         }
 
     def compute_reward(self, achieved_goal, desired_goal, info):
@@ -75,7 +76,7 @@ class PusherEnv(SawyerEnv):
 
         # Block rotation 
 
-        
+
 
 
         d = block_penalty

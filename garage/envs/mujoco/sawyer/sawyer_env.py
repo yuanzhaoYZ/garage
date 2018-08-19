@@ -183,6 +183,7 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
                  reward_type='dense',
                  control_method='task_space_control',
                  file_path='pick_and_place.xml',
+                 free_object=True,
                  *args,
                  **kwargs):
         """
@@ -215,7 +216,7 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
         self._randomize_start_jpos = randomize_start_jpos
         self._terminate_on_collision = terminate_on_collision
         self._collision_penalty = collision_penalty
-
+        self._free_object = free_object
         file_path = osp.join(MODEL_DIR, file_path)
         MujocoEnv.__init__(self, file_path=file_path)
 
@@ -246,6 +247,11 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
     def env_setup(self):
         reset_mocap_welds(self.sim)
         self.sim.forward()
+
+    def render(self, mode="human"):
+        viewer = self.get_viewer()
+        viewer.add_marker(pos=np.array(self._desired_goal), label="goal", size=0.01 * np.ones(3),)
+        super(SawyerEnv, self).render(mode=mode)
 
     @property
     def joint_position_space(self):
@@ -296,10 +302,12 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
         self.sim.forward()
 
     def set_object_position(self, position):
-        # object_qpos = np.concatenate((position, [1, 0, 0, 0]))
-        # self.sim.data.set_joint_qpos('object0:joint', object_qpos)
-        self.sim.data.set_joint_qpos("object0:joint1", position[0])
-        self.sim.data.set_joint_qpos("object0:joint2", position[1])
+        if self._free_object:
+            object_qpos = np.concatenate((position, [1, 0, 0, 0]))
+            self.sim.data.set_joint_qpos('object0:joint', object_qpos)
+        else:
+            self.sim.data.set_joint_qpos("object0:joint1", position[0])
+            self.sim.data.set_joint_qpos("object0:joint2", position[1])
 
     @property
     def object_position(self):
@@ -387,10 +395,8 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
         else:
             raise NotImplementedError
         self._step += 1
-        
+
         obs = self.get_obs()
-        self._achieved_goal = self.object_position
-        self._desired_goal = self._goal_configuration.object_pos
 
         # collision checking is expensive so cache the value
         in_collision = self.in_collision

@@ -44,8 +44,8 @@ class ReacherEnv(SawyerEnv):
         else:
             raise NotImplementedError
 
-        achieved_goal = gripper_pos
-        desired_goal = self._goal_configuration.gripper_pos
+        self._achieved_goal = gripper_pos
+        self._desired_goal = self._goal_configuration.gripper_pos
 
         # achieved_goal_qpos = np.concatenate((achieved_goal, [1, 0, 0, 0]))
         # self.sim.data.set_joint_qpos('achieved_goal:joint', achieved_goal_qpos)
@@ -54,12 +54,12 @@ class ReacherEnv(SawyerEnv):
 
         return {
             'observation': obs,
-            'achieved_goal': achieved_goal,
-            'desired_goal': desired_goal,
+            'achieved_goal': self._achieved_goal,
+            'desired_goal': self._desired_goal,
             'has_object': False,
             'gripper_state': self.gripper_state,
             'gripper_pos': gripper_pos,
-            'object_pos': desired_goal,
+            'object_pos': self._desired_goal,
         }
 
     def compute_reward(env, achieved_goal, desired_goal, info):
