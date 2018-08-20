@@ -58,6 +58,7 @@ class SawyerEnv(RosEnv):
             a dictionary containing other diagnostic information
             from the previous action
         """
+        action = action.copy()
         self._robot.send_command(action)
 
         obs = self.get_observation()

@@ -10,6 +10,14 @@ from garage.contrib.ros.envs.sawyer.sawyer_env import SawyerEnv
 from garage.contrib.ros.robots import Sawyer
 from garage.contrib.ros.worlds import EmptyWorld
 from garage.core import Serializable
+from garage.misc.overrides import overrides
+try:
+    from garage.config import STEP_FREQ
+except ImportError:
+    raise NotImplementedError(
+        "Please set STEP_FREQ in garage/config_personal.py!"
+        "example 1: "
+        "   STEP_FREQ = 5")
 
 
 class ReacherEnv(SawyerEnv, Serializable):
@@ -17,12 +25,14 @@ class ReacherEnv(SawyerEnv, Serializable):
 
     def __init__(self,
                  initial_goal,
-                 initial_joint_pos,
+                 initial_joint_pos=None,
                  sparse_reward=False,
                  simulated=False,
                  distance_threshold=0.05,
                  target_range=0.15,
-                 robot_control_mode='position'):
+                 robot_control_mode='position',
+                 never_done=False,
+                 completion_bonus=0.):
         """
         Reacher Environment.
 
@@ -47,6 +57,9 @@ class ReacherEnv(SawyerEnv, Serializable):
         self._distance_threshold = distance_threshold
         self._target_range = target_range
         self._sparse_reward = sparse_reward
+        self._robot_control_mode = robot_control_mode
+        self._never_done = never_done
+        self._completion_bonus = completion_bonus
         self.initial_goal = initial_goal
         self.goal = self.initial_goal.copy()
         self.simulated = simulated
@@ -57,6 +70,14 @@ class ReacherEnv(SawyerEnv, Serializable):
         self._moveit_group_name = 'right_arm'
         self._moveit_group = moveit_commander.MoveGroupCommander(
             self._moveit_group_name)
+
+        if initial_joint_pos is None:
+            jpos = [-0.140923828125, -1.2789248046875, -3.043166015625,
+                    -2.139623046875, -0.047607421875, -0.7052822265625, -1.4102060546875,]
+            initial_joint_pos = {
+                "right_j{}".format(i): p
+                for i, p in enumerate(jpos)
+            }
 
         self._robot = Sawyer(
             initial_joint_pos=initial_joint_pos,
@@ -104,20 +125,25 @@ class ReacherEnv(SawyerEnv, Serializable):
                      'achieved_goal': achieved_goal,
                      'desired_goal': self.goal}
         """
-        obs = self._robot.get_observation()
+        if self._robot_control_mode == 'position':
+            joint_positions = self._robot.joint_positions
+            gripper_position = self._robot.gripper_position
+            observation = np.concatenate([joint_positions, gripper_position])
+        else:
+            obs = self._robot.get_observation()
 
-        robot_gripper_pos = self._robot.gripper_pose['position']
+            robot_gripper_pos = self._robot.gripper_pose['position']
 
-        achieved_goal = np.array(
-            [robot_gripper_pos.x, robot_gripper_pos.y, robot_gripper_pos.z])
+            achieved_goal = np.array(
+                [robot_gripper_pos.x, robot_gripper_pos.y, robot_gripper_pos.z])
 
-        Observation = collections.namedtuple(
-            'Observation', 'observation achieved_goal desired_goal')
+            Observation = collections.namedtuple(
+                'Observation', 'observation achieved_goal desired_goal')
 
-        observation = Observation(
-            observation=obs,
-            achieved_goal=achieved_goal,
-            desired_goal=self.goal)
+            observation = Observation(
+                observation=obs,
+                achieved_goal=achieved_goal,
+                desired_goal=self.goal)
 
         return observation
 
@@ -170,3 +196,32 @@ class ReacherEnv(SawyerEnv, Serializable):
             done = self._goal_distance(achieved_goal,
                                        goal) < self._distance_threshold
         return done
+
+    @overrides
+    @rate_limited(STEP_FREQ)
+    def step(self, action):
+
+        action = action.copy()
+        self._robot.send_command(action)
+
+        obs = self.get_observation()
+
+        achieved_goal = self._robot.gripper_position
+        reward = self.reward(achieved_goal, self.goal)
+        done = self.done(achieved_goal, self.goal)
+
+        is_success = np.linalg.norm(achieved_goal - self.goal, axis=-1)
+
+        if is_success:
+            reward = self.completion_bonus
+
+        if self.never_done:
+            done = False
+
+        return obs, reward, done, dict()
+
+    @overrides
+    def reset(self):
+        self._robot.reset()
+        self._world.reset()
+        return self.get_observation()

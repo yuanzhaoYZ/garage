@@ -145,8 +145,14 @@ class Sawyer(Robot):
              robot_joint_velocities, robot_joint_efforts))
         return obs
 
+    @property
     def limb_joint_angles(self):
         return self._limb.joint_angles()
+
+    @property
+    def gripper_position(self):
+        return np.array(self._limb.endpoint_pose()['position'])
+    
 
     @property
     def observation_space(self):
@@ -161,6 +167,23 @@ class Sawyer(Robot):
             np.inf,
             shape=self.get_observation().shape,
             dtype=np.float32)
+
+    @property
+    def joint_position_space(self):
+        low = np.array(
+            [-0.020833, -0.020833, -3.0503, -3.8095, -3.0426, -3.0439, -2.9761, -2.9761, -4.7124])
+        high = np.array(
+            [0.020833, 0.020833, 3.0503, 2.2736, 3.0426, 3.0439, 2.9761, 2.9761, 4.7124])
+        return Box(low, high, dtype=np.float32)
+
+    def _send_incremental_position_command(self, jpos):
+        current_joint_angles = self._limb.joint_angles()
+        joint_limits = self.joint_position_space
+        commands = {}
+        for j, p in current_joint_angles.items():
+            index = int(j[-1])
+            commands[j] = np.clip(p + jpos[j], joint_limits.low[index], joint_limits.high[index])
+        self._limb.set_joint_positions(commands)
 
     def send_command(self, commands):
         """
@@ -178,7 +201,7 @@ class Sawyer(Robot):
             i += 1
 
         if self._control_mode == 'position':
-            self._set_limb_joint_positions(joint_commands)
+            self._send_incremental_position_command(joint_commands)
         elif self._control_mode == 'velocity':
             self._set_limb_joint_velocities(joint_commands)
         elif self._control_mode == 'effort':
@@ -202,19 +225,10 @@ class Sawyer(Robot):
 
         :return: action space
         """
-        lower_bounds = np.array([])
-        upper_bounds = np.array([])
         for joint in self._used_joints:
             joint_idx = self._joint_limits.joint_names.index(joint)
             if self._control_mode == 'position':
-                lower_bounds = np.concatenate(
-                    (lower_bounds,
-                     np.array(self._joint_limits.position_lower[
-                         joint_idx:joint_idx + 1])))
-                upper_bounds = np.concatenate(
-                    (upper_bounds,
-                     np.array(self._joint_limits.position_upper[
-                         joint_idx:joint_idx + 1])))
+                return gym.spaces.Box(low=np.full(7, -0.02), high=np.full(7, 0.02), dtype=np.float32)
             elif self._control_mode == 'velocity':
                 velocity_limit = np.array(
                     self._joint_limits.velocity[joint_idx:joint_idx + 1]) * 0.1
