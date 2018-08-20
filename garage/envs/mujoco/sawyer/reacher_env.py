@@ -40,17 +40,12 @@ class ReacherEnv(SawyerEnv):
         if self._control_method == 'task_space_control':
             obs = np.concatenate([gripper_pos])
         elif self._control_method == 'position_control':
-            obs = np.concatenate([self.joint_positions, gripper_pos])
+            obs = np.concatenate([self.joint_positions[2:], gripper_pos])
         else:
             raise NotImplementedError
 
         self._achieved_goal = gripper_pos
         self._desired_goal = self._goal_configuration.gripper_pos
-
-        # achieved_goal_qpos = np.concatenate((achieved_goal, [1, 0, 0, 0]))
-        # self.sim.data.set_joint_qpos('achieved_goal:joint', achieved_goal_qpos)
-        # desired_goal_qpos = np.concatenate((desired_goal, [1, 0, 0, 0]))
-        # self.sim.data.set_joint_qpos('desired_goal:joint', desired_goal_qpos)
 
         return {
             'observation': obs,

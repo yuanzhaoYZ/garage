@@ -251,6 +251,19 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
     def render(self, mode="human"):
         viewer = self.get_viewer()
         viewer.add_marker(pos=np.array(self._desired_goal), label="goal", size=0.01 * np.ones(3),)
+        # GOALS = [
+        #   # (  z     x,    y)
+        #     (0.5,  0.3, 0.15),
+        #     (0.5, -0.3, 0.15),
+        #     (0.5,  0.3,  0.3),
+        #     (0.5, -0.3,  0.3),
+        #     (0.7,  0.3, 0.15),
+        #     (0.7, -0.3, 0.15),
+        #     (0.7,  0.3,  0.3),
+        #     (0.7, -0.3,  0.3),
+        # ]
+        # for i, g in enumerate(GOALS):
+        #     viewer.add_marker(pos=g, label="task_{}".format(i+1), size=0.01*np.ones(3),)
         super(SawyerEnv, self).render(mode=mode)
 
     @property
