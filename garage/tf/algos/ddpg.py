@@ -516,7 +516,7 @@ class DDPG(RLAlgorithm):
         return qval_loss, ys, qval, action_loss
 
     def get_itr_snapshot(self, itr):
-        return dict(itr=itr, policy=self.actor, env=self.env)
+        return dict(itr=itr, policy=self.actor)
 
 
 def get_target_ops(vars, target_vars, tau):

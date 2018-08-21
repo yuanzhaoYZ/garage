@@ -112,7 +112,7 @@ class Sawyer(Robot):
         self._limb.move_to_joint_positions(
             self._initial_joint_pos, timeout=5.0)
         self._gripper.open()
-        rospy.sleep(1.0)
+        rospy.sleep(0.01)
 
     def reset(self):
         """Reset sawyer."""

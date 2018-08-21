@@ -168,7 +168,7 @@ class ReacherEnv(SawyerEnv, Serializable):
         """
         d = self._goal_distance(achieved_goal, goal)
         if d < self._distance_threshold:
-            return 100
+            return self._completion_bonus
         else:
             if self._sparse_reward:
                 return -1.
@@ -201,7 +201,7 @@ class ReacherEnv(SawyerEnv, Serializable):
         return done
 
     @overrides
-    @rate_limited(STEP_FREQ)
+#    @rate_limited(STEP_FREQ)
     def step(self, action):
 
         action = action.copy()
@@ -212,9 +212,10 @@ class ReacherEnv(SawyerEnv, Serializable):
 
         achieved_goal = self._robot.gripper_position
         reward = self.reward(achieved_goal, self.goal)
+
         done = self.done(achieved_goal, self.goal)
 
-        is_success = np.linalg.norm(achieved_goal - self.goal, axis=-1)
+        is_success = np.linalg.norm(achieved_goal - self.goal, axis=-1) < self._distance_threshold
 
         if is_success:
             reward = self._completion_bonus
