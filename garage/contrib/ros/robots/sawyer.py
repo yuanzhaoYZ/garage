@@ -174,7 +174,7 @@ class Sawyer(Robot):
             [-0.020833, -0.020833, -3.0503, -3.8095, -3.0426, -3.0439, -2.9761, -2.9761, -4.7124])
         high = np.array(
             [0.020833, 0.020833, 3.0503, 2.2736, 3.0426, 3.0439, 2.9761, 2.9761, 4.7124])
-        return Box(low, high, dtype=np.float32)
+        return gym.spaces.Box(low, high, dtype=np.float32)
 
     def _send_incremental_position_command(self, jpos):
         current_joint_angles = self._limb.joint_angles()
@@ -207,7 +207,7 @@ class Sawyer(Robot):
         elif self._control_mode == 'effort':
             self._set_limb_joint_torques(joint_commands)
 
-        self._set_gripper_position(commands[7])
+        # self._set_gripper_position(commands[7])
 
     @property
     def gripper_pose(self):
@@ -246,3 +246,10 @@ class Sawyer(Robot):
             np.concatenate((lower_bounds, np.array([0]))),
             np.concatenate((upper_bounds, np.array([100]))),
             dtype=np.float32)
+
+    @property
+    def joint_positions(self):
+        current_positions = self._limb.joint_angles()
+        jpos = [current_positions["right_j{}".format(i)] for i in range(7)]
+        return jpos
+

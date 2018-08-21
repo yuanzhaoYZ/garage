@@ -9,6 +9,7 @@ import numpy as np
 from garage.contrib.ros.envs.sawyer.sawyer_env import SawyerEnv
 from garage.contrib.ros.robots import Sawyer
 from garage.contrib.ros.worlds import EmptyWorld
+from garage.contrib.ros.util.common import rate_limited
 from garage.core import Serializable
 from garage.misc.overrides import overrides
 try:
@@ -32,7 +33,8 @@ class ReacherEnv(SawyerEnv, Serializable):
                  target_range=0.15,
                  robot_control_mode='position',
                  never_done=False,
-                 completion_bonus=0.):
+                 completion_bonus=0.,
+                 action_scale=1.):
         """
         Reacher Environment.
 
@@ -60,6 +62,7 @@ class ReacherEnv(SawyerEnv, Serializable):
         self._robot_control_mode = robot_control_mode
         self._never_done = never_done
         self._completion_bonus = completion_bonus
+        self._action_scale = action_scale
         self.initial_goal = initial_goal
         self.goal = self.initial_goal.copy()
         self.simulated = simulated
@@ -99,7 +102,7 @@ class ReacherEnv(SawyerEnv, Serializable):
         return gym.spaces.Box(
             -np.inf,
             np.inf,
-            shape=self.get_observation().observation.shape,
+            shape=self.get_observation().shape,
             dtype=np.float32)
 
     def sample_goal(self):
@@ -202,6 +205,7 @@ class ReacherEnv(SawyerEnv, Serializable):
     def step(self, action):
 
         action = action.copy()
+        action = action * self._action_scale
         self._robot.send_command(action)
 
         obs = self.get_observation()
@@ -213,9 +217,9 @@ class ReacherEnv(SawyerEnv, Serializable):
         is_success = np.linalg.norm(achieved_goal - self.goal, axis=-1)
 
         if is_success:
-            reward = self.completion_bonus
+            reward = self._completion_bonus
 
-        if self.never_done:
+        if self._never_done:
             done = False
 
         return obs, reward, done, dict()
