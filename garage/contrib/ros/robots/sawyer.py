@@ -1,5 +1,6 @@
 """Sawyer Interface."""
 
+from geometry_msgs.msg import Pose
 import gym
 from intera_core_msgs.msg import JointLimits
 import intera_interface
@@ -74,6 +75,21 @@ class Sawyer(Robot):
             rs.joint_state.position.append(joint_angles[joint])
         result = self._sv.get_state_validity(rs, self._moveit_group)
         return result.valid
+
+    def move_gripper_to_position(self, position):
+        current_position = self._limb.endpoint_pose()
+        desired_pose = Pose()
+        current_pose = self.endpoint_pose
+        desired_pose.orientation.w = current_pose['orientation'].w
+        desired_pose.orientation.x = current_pose['orientation'].x
+        desired_pose.orientation.y = current_pose['orientation'].y
+        desired_pose.orientation.z = current_pose['orientation'].z
+        desired_pose.position.x = current_pose['position'].x + commands[0]
+        desired_pose.position.y = current_pose['position'].y + commands[1]
+        desired_pose.position.z = current_pose['position'].z + commands[2]
+        
+        joint_angles = self._limb.ik_request(desired_pose, "right_hand")
+        self._limb.set_joint_positions(joint_angles)
 
     @property
     def enabled(self):
