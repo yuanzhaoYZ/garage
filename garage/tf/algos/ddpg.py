@@ -280,7 +280,12 @@ class DDPG(RLAlgorithm):
                             observation = self.env.reset()
                             if self.es:
                                 self.es.reset()
-
+                    
+                    if self.replay_buffer.size >= 1e5:
+                        import pickle
+                        pickle.dump(self.replay_buffer._buffer, open("buf_ode.pkl", "wb"))
+                        import ipdb
+                        ipdb.set_trace()
                     for train_itr in range(self.n_train_steps):
                         if self.replay_buffer.size >= self.min_buffer_size:
                             self.evaluate = True

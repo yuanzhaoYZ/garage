@@ -34,7 +34,8 @@ class ReacherEnv(SawyerEnv, Serializable):
                  robot_control_mode='position',
                  never_done=False,
                  completion_bonus=0.,
-                 action_scale=1.):
+                 action_scale=1.,
+                 transform_func=None):
         """
         Reacher Environment.
 
@@ -63,6 +64,7 @@ class ReacherEnv(SawyerEnv, Serializable):
         self._never_done = never_done
         self._completion_bonus = completion_bonus
         self._action_scale = action_scale
+        self._transform_func = transform_func
         self.initial_goal = initial_goal
         self.goal = self.initial_goal.copy()
         self.simulated = simulated
@@ -132,6 +134,8 @@ class ReacherEnv(SawyerEnv, Serializable):
             joint_positions = self._robot.joint_positions
             gripper_position = self._robot.gripper_position
             observation = np.concatenate([joint_positions, gripper_position])
+            if self._transform_func is not None:
+                observation[7:] = self._transform_func(observation[7:].copy())
         else:
             obs = self._robot.get_observation()
 

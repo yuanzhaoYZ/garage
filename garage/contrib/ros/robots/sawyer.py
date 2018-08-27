@@ -1,5 +1,4 @@
 """Sawyer Interface."""
-
 from geometry_msgs.msg import Pose
 import gym
 from intera_core_msgs.msg import JointLimits
@@ -77,19 +76,18 @@ class Sawyer(Robot):
         return result.valid
 
     def move_gripper_to_position(self, position):
-        current_position = self._limb.endpoint_pose()
         desired_pose = Pose()
-        current_pose = self.endpoint_pose
+        current_pose = self._limb.endpoint_pose()
         desired_pose.orientation.w = current_pose['orientation'].w
         desired_pose.orientation.x = current_pose['orientation'].x
         desired_pose.orientation.y = current_pose['orientation'].y
         desired_pose.orientation.z = current_pose['orientation'].z
-        desired_pose.position.x = current_pose['position'].x + commands[0]
-        desired_pose.position.y = current_pose['position'].y + commands[1]
-        desired_pose.position.z = current_pose['position'].z + commands[2]
+        desired_pose.position.x = position[0]
+        desired_pose.position.y = position[1]
+        desired_pose.position.z = position[2]
         
         joint_angles = self._limb.ik_request(desired_pose, "right_hand")
-        self._limb.set_joint_positions(joint_angles)
+        self._limb.move_to_joint_positions(joint_angles)
 
     @property
     def enabled(self):
@@ -121,6 +119,7 @@ class Sawyer(Robot):
 
     def _set_gripper_position(self, position):
         self._gripper.set_position(position)
+
 
     def _move_to_start_position(self):
         if rospy.is_shutdown():
@@ -187,15 +186,16 @@ class Sawyer(Robot):
     @property
     def joint_position_space(self):
         low = np.array(
-            [-0.020833, -0.020833, -3.0503, -3.8095, -3.0426, -3.0439, -2.9761, -2.9761, -4.7124])
+            [-3.0503, -3.8095, -3.0426, -3.0439, -2.9761, -2.9761, -4.7124])
         high = np.array(
-            [0.020833, 0.020833, 3.0503, 2.2736, 3.0426, 3.0439, 2.9761, 2.9761, 4.7124])
+            [3.0503, 2.2736, 3.0426, 3.0439, 2.9761, 2.9761, 4.7124])
         return gym.spaces.Box(low, high, dtype=np.float32)
 
     def _send_incremental_position_command(self, jpos):
         current_joint_angles = self._limb.joint_angles()
         joint_limits = self.joint_position_space
         commands = {}
+
         for j, p in current_joint_angles.items():
             index = int(j[-1])
             commands[j] = np.clip(p + jpos[j], joint_limits.low[index], joint_limits.high[index])

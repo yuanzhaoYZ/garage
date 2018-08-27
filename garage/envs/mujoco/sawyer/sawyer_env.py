@@ -556,8 +556,10 @@ class SawyerEnv(MujocoEnv, gym.GoalEnv):
                     import ipdb
                     ipdb.set_trace()
 
-                self.joint_positions = self.joint_position_space.sample()
+                self.sim.data.ctrl[:] = self.joint_position_space.sample()
                 self.sim.forward()
+                for _ in range(100):
+                    self.sim.step()
                 attempts += 1
         else:
             self.sim.data.ctrl[:] = np.array([0., 0., -0.140923828125, -1.2789248046875, -3.043166015625,
