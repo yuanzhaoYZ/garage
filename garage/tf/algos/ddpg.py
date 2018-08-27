@@ -16,6 +16,7 @@ import tensorflow as tf
 import tensorflow.contrib as tc
 
 from garage.algos.base import RLAlgorithm
+from garage.core.serializable import Serializable
 from garage.envs.util import configure_dims, dims_to_shapes
 from garage.misc import logger
 from garage.misc.overrides import overrides
@@ -297,10 +298,9 @@ class DDPG(RLAlgorithm):
                             epoch_qs.append(q)
 
             logger.log("Training finished")
-            logger.log("Saving snapshot")
-            itr = epoch * self.n_epoch_cycles + epoch_cycle
-            params = self.get_itr_snapshot(itr)
-            logger.save_itr_params(itr, params)
+            logger.log("Saving snapshot #{}".format(epoch))
+            params = self.get_itr_snapshot(epoch)
+            logger.save_itr_params(epoch, params)
             logger.log("Saved")
             if self.evaluate:
                 logger.record_tabular('Epoch', epoch)
@@ -347,22 +347,9 @@ class DDPG(RLAlgorithm):
 
     def _initialize(self):
         with tf.name_scope(self.name, "DDPG"):
-            with tf.name_scope("setup_networks"):
-                """Set up the actor, critic and target network."""
-                # Set up the actor and critic network
-                self.actor._build_net(trainable=True)
-                self.critic._build_net(trainable=True)
-
-                # Create target actor and critic network
-                target_actor = copy(self.actor)
-                target_critic = copy(self.critic)
-
-                # Set up the target network
-                target_actor.name = "TargetActor"
-                target_actor._build_net(trainable=False)
-                target_critic.name = "TargetCritic"
-                target_critic._build_net(trainable=False)
-
+            # Create target actor and critic network
+            target_actor = Serializable.clone(self.actor, trainable=False, name="target_actor")
+            target_critic = Serializable.clone(self.critic, trainable=False, name="target_critic")
             input_shapes = dims_to_shapes(self.input_dims)
 
             # Initialize replay buffer

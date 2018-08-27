@@ -9,7 +9,7 @@ from garage.tf.misc import tensor_utils
 from garage.tf.q_functions import QFunction
 
 
-class ContinuousMLPQFunction(QFunction, Serializable, LayersPowered):
+class ContinuousMLPQFunction(QFunction, LayersPowered, Serializable):
     """
     This class implements a q value network to predict q based on the input
     state and action. It uses an MLP to fit the function of Q(s, a).
@@ -23,7 +23,8 @@ class ContinuousMLPQFunction(QFunction, Serializable, LayersPowered):
                  action_merge_layer=-2,
                  output_nonlinearity=None,
                  input_include_goal=False,
-                 bn=False):
+                 bn=False,
+                 trainable=True):
         """
         Initialize class with multiple attributes.
 
@@ -59,6 +60,9 @@ class ContinuousMLPQFunction(QFunction, Serializable, LayersPowered):
         self._action_merge_layer = action_merge_layer
         self._output_nonlinearity = output_nonlinearity
         self._batch_norm = bn
+        self._trainable = trainable
+
+        self._build_net(trainable=trainable)
 
     def _build_net(self, reuse=None, custom_getter=None, trainable=None):
         """

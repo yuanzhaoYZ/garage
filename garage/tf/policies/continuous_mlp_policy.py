@@ -18,7 +18,7 @@ from garage.tf.policies import Policy
 from garage.tf.spaces import Box
 
 
-class ContinuousMLPPolicy(Policy, Serializable, LayersPowered):
+class ContinuousMLPPolicy(Policy, LayersPowered, Serializable):
     """
     This class implements a policy network.
 
@@ -33,7 +33,8 @@ class ContinuousMLPPolicy(Policy, Serializable, LayersPowered):
                  hidden_nonlinearity=tf.nn.relu,
                  output_nonlinearity=tf.nn.tanh,
                  input_include_goal=False,
-                 bn=False):
+                 bn=False,
+                 trainable=True):
         """
         Initialize class with multiple attributes.
 
@@ -72,6 +73,10 @@ class ContinuousMLPPolicy(Policy, Serializable, LayersPowered):
         self._output_nonlinearity = output_nonlinearity
         self._batch_norm = bn
         self._policy_network_name = "policy_network"
+        self._trainable = trainable
+
+        # Build the nework and initialized as Parameterized
+        self._build_net(trainable=self._trainable)
 
     def _build_net(self, reuse=None, custom_getter=None, trainable=None):
         """
