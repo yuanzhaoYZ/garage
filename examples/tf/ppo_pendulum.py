@@ -25,7 +25,7 @@ def run_task(*_):
     :param _:
     :return:
     """
-    env = TfEnv(normalize(gym.make("InvertedDoublePendulum-v2")))
+    env = TfEnv(normalize(gym.make("Pendulum-v0")))
 
     policy = GaussianMLPPolicy(env_spec=env.spec, hidden_sizes=(64, 64))
 

@@ -22,6 +22,7 @@ class FirstOrderOptimizer(Serializable):
             tf_optimizer_args=None,
             # learning_rate=1e-3,
             max_epochs=1000,
+            max_grad_norm=None,
             tolerance=1e-6,
             batch_size=32,
             callback=None,
@@ -42,6 +43,7 @@ class FirstOrderOptimizer(Serializable):
         self._opt_fun = None
         self._target = None
         self._callback = callback
+        self._max_grad_norm = max_grad_norm
         if tf_optimizer_cls is None:
             tf_optimizer_cls = tf.train.AdamOptimizer
         if tf_optimizer_args is None:
@@ -75,8 +77,21 @@ class FirstOrderOptimizer(Serializable):
 
             self._target = target
 
-            self._train_op = self._tf_optimizer.minimize(
+            # self._train_op = self._tf_optimizer.minimize(
+            #     loss, var_list=target.get_params(trainable=True))
+
+            grads_and_var = self._tf_optimizer.compute_gradients(
                 loss, var_list=target.get_params(trainable=True))
+            grads, var = zip(*grads_and_var)
+
+            if self._max_grad_norm is not None:
+                grads, _grad_norm = tf.clip_by_global_norm(
+                    grads, self._max_grad_norm)
+            grads_and_var = list(zip(grads, var))
+            # zip aggregate each gradient with parameters associated
+            # For instance zip(ABCD, xyza) => Ax, By, Cz, Da
+
+            self._train_op = self._tf_optimizer.apply_gradients(grads_and_var)
 
             # updates = OrderedDict(
             #     [(k, v.astype(k.dtype)) for k, v in updates.iteritems()])
@@ -121,6 +136,7 @@ class FirstOrderOptimizer(Serializable):
             for batch in dataset.iterate(update=True):
                 sess.run(self._train_op,
                          dict(list(zip(self._input_vars, batch))))
+
                 if self._verbose:
                     progbar.update(len(batch[0]))
 
