@@ -5,15 +5,15 @@ from garage.tf.core.networks import mlp, parameter
 from tests.fixtures import TfGraphTestCase
 
 
-class TestNetworks(TfGraphTestCase):
+class TestMLP(TfGraphTestCase):
     def setUp(self):
-        super(TestNetworks, self).setUp()
+        super(TestMLP, self).setUp()
         self.obs_input = np.array([[1, 2, 3, 4]])
-        input_shape = self.obs_input.shape[1]  # 4
+        input_shape = self.obs_input.shape[1:]  # 4
         self.hidden_nonlinearity = tf.nn.relu
 
         self._input = tf.placeholder(
-            tf.float32, shape=(None, input_shape), name="input")
+            tf.float32, shape=(None, ) + input_shape, name="input")
 
         self._output_shape = 2
 

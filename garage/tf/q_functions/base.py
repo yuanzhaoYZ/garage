@@ -1,5 +1,25 @@
+import tensorflow as tf
+
 from garage.tf.core import Parameterized
 
 
 class QFunction(Parameterized):
-    pass
+    def _build_net(self, name, input_var):
+        raise NotImplementedError
+
+    def log_diagnostics(self, paths):
+        pass
+
+    def get_trainable_vars(self, scope=None):
+        return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope)
+
+    def get_global_vars(self, scope=None):
+        return tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=scope)
+
+    def get_regularizable_vars(self, scope=None):
+        scope = scope if scope else self._name
+        reg_vars = [
+            var for var in self.get_trainable_vars(scope=scope)
+            if 'W' in var.name and 'output' not in var.name
+        ]
+        return reg_vars
