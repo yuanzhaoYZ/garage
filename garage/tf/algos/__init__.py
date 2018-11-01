@@ -5,7 +5,9 @@ from garage.tf.algos.off_policy_rl_algorithm import OffPolicyRLAlgorithm
 from garage.tf.algos.ppo import PPO
 from garage.tf.algos.trpo import TRPO
 from garage.tf.algos.vpg import VPG
+from garage.tf.algos.dqn import DQN
 
 __all__ = [
-    "OffPolicyRLAlgorithm", "BatchPolopt", "DDPG", "NPO", "PPO", "TRPO", "VPG"
+    "OffPolicyRLAlgorithm", "BatchPolopt", "DDPG", "NPO", "PPO", "TRPO", "VPG",
+    "DQN"
 ]

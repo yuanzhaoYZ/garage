@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from garage.misc.overrides import overrides
-from garage.tf.core.networks import mlp
+from garage.tf.core.networks import mlp, q_func
 from garage.tf.q_functions import QFunction
 
 
@@ -36,12 +36,22 @@ class MLPQFunction(QFunction):
         self._layer_norm = layer_norm
 
     @overrides
-    def _build_net(self, name, input):
-        return mlp(
+    def _build_net(self, name, input, dueling=False, layer_norm=False):
+        network = mlp(
             input_var=input,
             output_dim=self._action_dim,
             hidden_sizes=self._hidden_sizes,
             name=name,
             hidden_nonlinearity=self._hidden_nonlinearity,
-            output_nonlinearity=self._output_nonlinearity,
+            output_nonlinearity=self._hidden_nonlinearity,
             layer_normalization=self._layer_norm)
+
+        return q_func(
+            input_network=network,
+            output_dim=self._action_dim,
+            hidden_sizes=[256],
+            name=name,
+            hidden_nonlinearity=self._hidden_nonlinearity,
+            output_nonlinearity=self._output_nonlinearity,
+            layer_normalization=layer_norm,
+            dueling=dueling)
