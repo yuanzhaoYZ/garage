@@ -96,7 +96,8 @@ def parameter(input_var,
             trainable=trainable)
 
         ndim = input_var.get_shape().ndims
-        broadcast_shape = tf.concat(
-            axis=0, values=[tf.shape(input_var)[:ndim - 1], [length]])
-        p_broadcast = broadcast_to(p, shape=broadcast_shape)
-        return p_broadcast
+        reshaped_p = tf.reshape(p, (1, ) * (ndim - 1) + (length, ))
+        tile_arg = tf.concat(
+            axis=0, values=[tf.shape(input_var)[:ndim - 1], [1]])
+        tiled = tf.tile(reshaped_p, tile_arg)
+        return tiled
