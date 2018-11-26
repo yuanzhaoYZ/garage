@@ -17,6 +17,16 @@ class TestGrayScale(unittest.TestCase):
         self.obs_r = self.env_r.reset()
 
     def test_gray_scale_output(self):
+        """
+        RGB to grayscale conversion using scikit-image.
 
-        gray_color = np.dot(self.obs[:, :, :3], [0.299, 0.587, 0.114]) / 255.0
-        np.testing.assert_array_equal(gray_color, self.obs_r)
+        Weights used for conversion:
+        Y = 0.2125 R + 0.7154 G + 0.0721 B
+
+        Reference:
+        http://scikit-image.org/docs/dev/api/skimage.color.html#skimage.color.rgb2grey
+        """
+
+        gray_scale_output = np.dot(self.obs[:, :, :3],
+                                   [0.2125, 0.7154, 0.0721]) / 255.0
+        np.testing.assert_array_almost_equal(gray_scale_output, self.obs_r)
