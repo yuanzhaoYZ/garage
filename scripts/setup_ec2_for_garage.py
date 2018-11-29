@@ -336,10 +336,12 @@ def write_config():
 
 
 def setup():
+    write_config()
+    from garage.config_personal import *
     setup_s3()
     setup_iam()
     setup_ec2()
-    write_config()
+    
 
 
 def query_yes_no(question, default="yes"):
