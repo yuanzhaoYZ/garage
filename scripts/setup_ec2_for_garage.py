@@ -13,6 +13,7 @@ ACCESS_KEY = os.environ["AWS_ACCESS_KEY"]
 ACCESS_SECRET = os.environ["AWS_ACCESS_SECRET"]
 S3_BUCKET_NAME = os.environ["GARAGE_S3_BUCKET"]
 
+
 ALL_REGION_AWS_SECURITY_GROUP_IDS = {}
 ALL_REGION_AWS_KEY_NAMES = {}
 
@@ -20,11 +21,11 @@ CONFIG_TEMPLATE = Template("""
 import os.path as osp
 import os
 
-USE_GPU = False
+USE_GPU = bool(os.getenv["USE_GPU",False])
 
 USE_TF = True
 
-AWS_REGION_NAME = "us-west-1"
+AWS_REGION_NAME = os.getenv["AWS_REGION_NAME","us-west-1"]
 
 if USE_GPU:
     DOCKER_IMAGE = "dementrock/rllab3-shared-gpu"
