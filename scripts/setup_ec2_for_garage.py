@@ -9,103 +9,6 @@ import botocore
 from garage import config
 from garage.misc import console
 
-ACCESS_KEY = os.environ["AWS_ACCESS_KEY"]
-ACCESS_SECRET = os.environ["AWS_ACCESS_SECRET"]
-S3_BUCKET_NAME = os.environ["GARAGE_S3_BUCKET"]
-
-
-ALL_REGION_AWS_SECURITY_GROUP_IDS = {}
-ALL_REGION_AWS_KEY_NAMES = {}
-
-CONFIG_TEMPLATE = Template("""
-import os.path as osp
-import os
-
-USE_GPU = bool(os.getenv("USE_GPU",False))
-
-USE_TF = True
-
-AWS_REGION_NAME = os.getenv("AWS_REGION_NAME","us-west-1")
-
-if USE_GPU:
-    DOCKER_IMAGE = "dementrock/rllab3-shared-gpu"
-else:
-    DOCKER_IMAGE = "dementrock/rllab3-shared"
-
-DOCKER_LOG_DIR = "/tmp/expt"
-
-AWS_S3_PATH = "s3://$s3_bucket_name/garage/experiments"
-
-AWS_CODE_SYNC_S3_PATH = "s3://$s3_bucket_name/garage/code"
-
-ALL_REGION_AWS_IMAGE_IDS = {
-    "ap-northeast-1": "ami-002f0167",
-    "ap-northeast-2": "ami-590bd937",
-    "ap-south-1": "ami-77314318",
-    "ap-southeast-1": "ami-1610a975",
-    "ap-southeast-2": "ami-9dd4ddfe",
-    "eu-central-1": "ami-63af720c",
-    "eu-west-1": "ami-41484f27",
-    "sa-east-1": "ami-b7234edb",
-    "us-east-1": "ami-83f26195",
-    "us-east-2": "ami-66614603",
-    "us-west-1": "ami-576f4b37",
-    "us-west-2": "ami-b8b62bd8"
-}
-
-AWS_IMAGE_ID = ALL_REGION_AWS_IMAGE_IDS[AWS_REGION_NAME]
-
-if USE_GPU:
-    AWS_INSTANCE_TYPE = "g2.2xlarge"
-else:
-    AWS_INSTANCE_TYPE = "c4.2xlarge"
-
-ALL_REGION_AWS_KEY_NAMES = $all_region_aws_key_names
-
-AWS_KEY_NAME = ALL_REGION_AWS_KEY_NAMES[AWS_REGION_NAME]
-
-AWS_SPOT = True
-
-AWS_SPOT_PRICE = '0.5'
-
-AWS_ACCESS_KEY = os.environ.get("AWS_ACCESS_KEY", None)
-
-AWS_ACCESS_SECRET = os.environ.get("AWS_ACCESS_SECRET", None)
-
-AWS_IAM_INSTANCE_PROFILE_NAME = "garage"
-
-AWS_SECURITY_GROUPS = ["garage-sg"]
-
-ALL_REGION_AWS_SECURITY_GROUP_IDS = $all_region_aws_security_group_ids
-
-AWS_SECURITY_GROUP_IDS = ALL_REGION_AWS_SECURITY_GROUP_IDS[AWS_REGION_NAME]
-
-FAST_CODE_SYNC_IGNORES = [
-    ".git",
-    "data/local",
-    "data/s3",
-    "data/video",
-    "src",
-    ".idea",
-    ".pods",
-    "tests",
-    "examples",
-    "docs",
-    ".idea",
-    ".DS_Store",
-    ".ipynb_checkpoints",
-    "blackbox",
-    "blackbox.zip",
-    "*.pyc",
-    "*.ipynb",
-    "scratch-notebooks",
-    "conopt_root",
-    "private/key_pairs",
-]
-
-FAST_CODE_SYNC = True
-
-""")
 
 
 def setup_iam():
@@ -316,32 +219,12 @@ def setup_ec2():
         ALL_REGION_AWS_KEY_NAMES[region] = key_name
 
 
-def write_config():
-    print("Writing config file...")
-    content = CONFIG_TEMPLATE.substitute(
-        all_region_aws_key_names=json.dumps(
-            ALL_REGION_AWS_KEY_NAMES, indent=4),
-        all_region_aws_security_group_ids=json.dumps(
-            ALL_REGION_AWS_SECURITY_GROUP_IDS, indent=4),
-        s3_bucket_name=S3_BUCKET_NAME,
-    )
-    config_personal_file = os.path.join(config.PROJECT_PATH,
-                                        "garage/config_personal.py")
-    if os.path.exists(config_personal_file):
-        if not query_yes_no("garage/config_personal.py exists. Override?",
-                            "no"):
-            sys.exit()
-    with open(config_personal_file, "wb") as f:
-        f.write(content.encode("utf-8"))
-
 
 def setup():
-    write_config()
-    from garage.config_personal import *
     setup_s3()
     setup_iam()
     setup_ec2()
-    
+    write_config()
 
 
 def query_yes_no(question, default="yes"):
