@@ -1,6 +1,6 @@
 import os
 import os.path as osp
-
+from string import Template
 
 ACCESS_KEY = os.environ["AWS_ACCESS_KEY"]
 ACCESS_SECRET = os.environ["AWS_ACCESS_SECRET"]

@@ -1,6 +1,5 @@
 import json
 import os
-from string import Template
 import sys
 
 import boto3
