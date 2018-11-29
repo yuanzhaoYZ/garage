@@ -21,11 +21,11 @@ CONFIG_TEMPLATE = Template("""
 import os.path as osp
 import os
 
-USE_GPU = bool(os.getenv["USE_GPU",False])
+USE_GPU = bool(os.getenv("USE_GPU",False))
 
 USE_TF = True
 
-AWS_REGION_NAME = os.getenv["AWS_REGION_NAME","us-west-1"]
+AWS_REGION_NAME = os.getenv("AWS_REGION_NAME","us-west-1")
 
 if USE_GPU:
     DOCKER_IMAGE = "dementrock/rllab3-shared-gpu"
