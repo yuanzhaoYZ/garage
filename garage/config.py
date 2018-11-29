@@ -77,10 +77,10 @@ if osp.exists(osp.join(osp.dirname(__file__), "config_personal.py")):
     from garage.config_personal import *  # noqa: F401, F403
 else:
     print("Creating your personal config from template...")
-    from shutil import copy
-    copy(
-        #osp.join(PROJECT_PATH, "garage/config_personal_template.py"),
-        osp.join(PROJECT_PATH, "garage/config_personal.py"))
+#     from shutil import copy
+#     copy(
+#         osp.join(PROJECT_PATH, "garage/config_personal_template.py"),
+#         osp.join(PROJECT_PATH, "garage/config_personal.py"))
     from garage.config_personal import *  # noqa: F401, F403
     print("Personal config created, but you should probably edit it before "
           "further experiments are run")
