@@ -200,6 +200,7 @@ else:
     copy(
         osp.join(PROJECT_PATH, "garage/config_personal_template.py"),
         osp.join(PROJECT_PATH, "garage/config_personal.py"))
+    write_config()
     from garage.config_personal import *  # noqa: F401, F403
     print("Personal config created, but you should probably edit it before "
           "further experiments are run")
