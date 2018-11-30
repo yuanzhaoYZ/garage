@@ -191,6 +191,7 @@ ENV = {}
 EBS_OPTIMIZED = True
 
 if osp.exists(osp.join(osp.dirname(__file__), "config_personal.py")):
+    print("===========Loading=====")
     from garage.config_personal import *  # noqa: F401, F403
 else:
     print("Creating your personal config from template...")
