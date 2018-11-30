@@ -15,6 +15,9 @@ USE_TF = True
 
 AWS_REGION_NAME = os.getenv("AWS_REGION_NAME","us-west-1")
 
+S3_BUCKET_NAME = os.environ["GARAGE_S3_BUCKET"]
+
+
 if USE_GPU:
     DOCKER_IMAGE = "dementrock/rllab3-shared-gpu"
 else:
@@ -22,15 +25,13 @@ else:
 
 DOCKER_LOG_DIR = "/tmp/expt"
 
-AWS_S3_PATH = "s3://$s3_bucket_name/garage/experiments"
+AWS_S3_PATH = "s3://%s/garage/experiments" % S3_BUCKET_NAME
 
-AWS_CODE_SYNC_S3_PATH = "s3://$s3_bucket_name/garage/code"
+AWS_CODE_SYNC_S3_PATH = "s3://%s/garage/code" % S3_BUCKET_NAME
 
 ALL_REGION_AWS_SECURITY_GROUP_IDS = eval(os.getenv("ALL_REGION_AWS_SECURITY_GROUP_IDS","dict()"))
 
 ALL_REGION_AWS_KEY_NAMES = eval(os.getenv("ALL_REGION_AWS_KEY_NAMES","dict()"))
-
-S3_BUCKET_NAME = os.environ["GARAGE_S3_BUCKET"]
 
 ALL_REGION_AWS_IMAGE_IDS = {
     "ap-northeast-1": "ami-002f0167",
