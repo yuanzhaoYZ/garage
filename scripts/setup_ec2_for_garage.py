@@ -9,6 +9,7 @@ from garage import config
 from garage.misc import console
 
 def setup_iam():
+    
     iam_client = boto3.client(
         "iam",
         aws_access_key_id=AWS_ACCESS_KEY,
@@ -24,7 +25,7 @@ def setup_iam():
         existing_role = iam.Role('garage')
         existing_role.load()
         # if role exists, delete and recreate
-        if not query_yes_no(
+        if not config.query_yes_no(
             ("There is an existing role named garage. "
              "Proceed to delete everything garage-related and recreate?"),
                 default="no"):
@@ -188,7 +189,7 @@ def setup_ec2():
             key_pair = ec2_client.create_key_pair(KeyName=key_name)
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == 'InvalidKeyPair.Duplicate':
-                if not query_yes_no(
+                if not config.query_yes_no(
                     ("Key pair with name %s exists. "
                      "Proceed to delete and recreate?") % key_name, "no"):
                     sys.exit()
