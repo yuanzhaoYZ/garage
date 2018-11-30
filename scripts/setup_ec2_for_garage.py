@@ -11,13 +11,13 @@ from garage.misc import console
 def setup_iam():
     iam_client = boto3.client(
         "iam",
-        aws_access_key_id=ACCESS_KEY,
-        aws_secret_access_key=ACCESS_SECRET,
+        aws_access_key_id=AWS_ACCESS_KEY,
+        aws_secret_access_key=AWS_ACCESS_SECRET,
     )
     iam = boto3.resource(
         'iam',
-        aws_access_key_id=ACCESS_KEY,
-        aws_secret_access_key=ACCESS_SECRET)
+        aws_access_key_id=AWS_ACCESS_KEY,
+        aws_secret_access_key=AWS_ACCESS_SECRET)
 
     # delete existing role if it exists
     try:
@@ -113,8 +113,8 @@ def setup_s3():
     print("Creating S3 bucket at s3://%s" % S3_BUCKET_NAME)
     s3_client = boto3.client(
         "s3",
-        aws_access_key_id=ACCESS_KEY,
-        aws_secret_access_key=ACCESS_SECRET,
+        aws_access_key_id=AWS_ACCESS_KEY,
+        aws_secret_access_key=AWS_ACCESS_SECRET,
     )
     try:
         s3_client.create_bucket(
@@ -140,14 +140,14 @@ def setup_ec2():
         ec2 = boto3.resource(
             "ec2",
             region_name=region,
-            aws_access_key_id=ACCESS_KEY,
-            aws_secret_access_key=ACCESS_SECRET,
+            aws_access_key_id=AWS_ACCESS_KEY,
+            aws_secret_access_key=AWS_ACCESS_SECRET,
         )
         ec2_client = boto3.client(
             "ec2",
             region_name=region,
-            aws_access_key_id=ACCESS_KEY,
-            aws_secret_access_key=ACCESS_SECRET,
+            aws_access_key_id=AWS_ACCESS_KEY,
+            aws_secret_access_key=AWS_ACCESS_SECRET,
         )
         existing_vpcs = list(ec2.vpcs.all())
         assert len(existing_vpcs) >= 1
