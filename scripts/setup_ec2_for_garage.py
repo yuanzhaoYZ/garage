@@ -112,7 +112,6 @@ def setup_iam():
 
 
 def setup_s3():
-    from garage.config_personal import S3_BUCKET_NAME
     print("Creating S3 bucket at s3://%s" % S3_BUCKET_NAME)
     s3_client = boto3.client(
         "s3",
@@ -221,6 +220,9 @@ def setup_ec2():
 
 
 def setup():
+    config_personal = os.path.abspath("../garage/config_personal.py")
+    if os.path.exists(config_personal):
+        exec(compile(open(config_personal, "rb").read(), config_personal, 'exec'))
     setup_s3()
     setup_iam()
     setup_ec2()
