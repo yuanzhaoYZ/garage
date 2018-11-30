@@ -112,6 +112,7 @@ def setup_iam():
 
 
 def setup_s3():
+    from garage.config_personal import S3_BUCKET_NAME
     print("Creating S3 bucket at s3://%s" % S3_BUCKET_NAME)
     s3_client = boto3.client(
         "s3",
