@@ -2,13 +2,8 @@ import os
 import os.path as osp
 from string import Template
 
-ACCESS_KEY = os.environ["AWS_ACCESS_KEY"]
-ACCESS_SECRET = os.environ["AWS_ACCESS_SECRET"]
-S3_BUCKET_NAME = os.environ["GARAGE_S3_BUCKET"]
-
 ALL_REGION_AWS_SECURITY_GROUP_IDS = {}
 ALL_REGION_AWS_KEY_NAMES = {}
-
 
 CONFIG_TEMPLATE = Template("""
 import os.path as osp
@@ -64,6 +59,8 @@ AWS_SPOT_PRICE = '0.5'
 AWS_ACCESS_KEY = os.environ.get("AWS_ACCESS_KEY", None)
 
 AWS_ACCESS_SECRET = os.environ.get("AWS_ACCESS_SECRET", None)
+
+S3_BUCKET_NAME = os.environ["GARAGE_S3_BUCKET"]
 
 AWS_IAM_INSTANCE_PROFILE_NAME = "garage"
 
