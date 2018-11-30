@@ -8,10 +8,6 @@ import botocore
 from garage import config
 from garage.misc import console
 
-config_personal = os.path.abspath("../garage/config_personal.py")
-if os.path.exists(config_personal):
-    exec(compile(open(config_personal, "rb").read(), config_personal, 'exec'))
-
 def setup_iam():
     iam_client = boto3.client(
         "iam",
@@ -228,4 +224,5 @@ def setup():
 
 
 if __name__ == "__main__":
+    from garage.config_personal import *
     setup()
