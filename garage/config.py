@@ -4,8 +4,8 @@ from string import Template
 import json
 import sys
 
-ALL_REGION_AWS_SECURITY_GROUP_IDS = eval(os.environ["ALL_REGION_AWS_SECURITY_GROUP_IDS",{}])
-ALL_REGION_AWS_KEY_NAMES = eval(os.environ["ALL_REGION_AWS_KEY_NAMES"])
+ALL_REGION_AWS_SECURITY_GROUP_IDS = eval(os.getenv("ALL_REGION_AWS_SECURITY_GROUP_IDS","dict()"))
+ALL_REGION_AWS_KEY_NAMES = eval(os.getenv("ALL_REGION_AWS_KEY_NAMES","dict()"))
 S3_BUCKET_NAME = os.environ["GARAGE_S3_BUCKET"]
 
 CONFIG_TEMPLATE = Template("""
