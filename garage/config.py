@@ -2,6 +2,7 @@ import os
 import os.path as osp
 from string import Template
 import json
+import sys
 
 ALL_REGION_AWS_SECURITY_GROUP_IDS = {}
 ALL_REGION_AWS_KEY_NAMES = {}
