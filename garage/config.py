@@ -4,9 +4,6 @@ from string import Template
 import json
 import sys
 
-ALL_REGION_AWS_SECURITY_GROUP_IDS = eval(os.getenv("ALL_REGION_AWS_SECURITY_GROUP_IDS","dict()"))
-ALL_REGION_AWS_KEY_NAMES = eval(os.getenv("ALL_REGION_AWS_KEY_NAMES","dict()"))
-S3_BUCKET_NAME = os.environ["GARAGE_S3_BUCKET"]
 
 CONFIG_TEMPLATE = Template("""
 import os.path as osp
@@ -28,6 +25,12 @@ DOCKER_LOG_DIR = "/tmp/expt"
 AWS_S3_PATH = "s3://$s3_bucket_name/garage/experiments"
 
 AWS_CODE_SYNC_S3_PATH = "s3://$s3_bucket_name/garage/code"
+
+ALL_REGION_AWS_SECURITY_GROUP_IDS = eval(os.getenv("ALL_REGION_AWS_SECURITY_GROUP_IDS","dict()"))
+
+ALL_REGION_AWS_KEY_NAMES = eval(os.getenv("ALL_REGION_AWS_KEY_NAMES","dict()"))
+
+S3_BUCKET_NAME = os.environ["GARAGE_S3_BUCKET"]
 
 ALL_REGION_AWS_IMAGE_IDS = {
     "ap-northeast-1": "ami-002f0167",
@@ -51,8 +54,6 @@ if USE_GPU:
 else:
     AWS_INSTANCE_TYPE = "c4.2xlarge"
 
-ALL_REGION_AWS_KEY_NAMES = $all_region_aws_key_names
-
 AWS_KEY_NAME = ALL_REGION_AWS_KEY_NAMES[AWS_REGION_NAME]
 
 AWS_SPOT = True
@@ -63,13 +64,9 @@ AWS_ACCESS_KEY = os.environ.get("AWS_ACCESS_KEY", None)
 
 AWS_ACCESS_SECRET = os.environ.get("AWS_ACCESS_SECRET", None)
 
-S3_BUCKET_NAME = os.environ["GARAGE_S3_BUCKET"]
-
 AWS_IAM_INSTANCE_PROFILE_NAME = "garage"
 
 AWS_SECURITY_GROUPS = ["garage-sg"]
-
-ALL_REGION_AWS_SECURITY_GROUP_IDS = $all_region_aws_security_group_ids
 
 AWS_SECURITY_GROUP_IDS = ALL_REGION_AWS_SECURITY_GROUP_IDS[AWS_REGION_NAME]
 
@@ -103,13 +100,7 @@ FAST_CODE_SYNC = True
 
 def write_config():
     print("Writing config file...")
-    content = CONFIG_TEMPLATE.substitute(
-        all_region_aws_key_names=json.dumps(
-            ALL_REGION_AWS_KEY_NAMES, indent=4),
-        all_region_aws_security_group_ids=json.dumps(
-            ALL_REGION_AWS_SECURITY_GROUP_IDS, indent=4),
-        s3_bucket_name=S3_BUCKET_NAME,
-    )
+    content = CONFIG_TEMPLATE.substitute()
     config_personal_file = os.path.join(PROJECT_PATH,
                                         "garage/config_personal.py")
     if os.path.exists(config_personal_file):
