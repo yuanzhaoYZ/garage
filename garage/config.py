@@ -103,8 +103,7 @@ def write_config():
     config_personal_file = os.path.join(PROJECT_PATH,
                                         "garage/config_personal.py")
     if os.path.exists(config_personal_file):
-        if not query_yes_no("garage/config_personal.py exists. Override?",
-                            "no"):
+        if not query_yes_no("garage/config_personal.py exists. Override?"):
             sys.exit()
     with open(config_personal_file, "wb") as f:
         f.write(content.encode("utf-8"))
@@ -212,16 +211,14 @@ ENV = {}
 EBS_OPTIMIZED = True
 
 if osp.exists(osp.join(osp.dirname(__file__), "config_personal.py")):
-    print("===========Loading=====")
-    write_config()
     from garage.config_personal import *  # noqa: F401, F403
-    print(S3_BUCKET_NAME)
 else:
     print("Creating your personal config from template...")
     from shutil import copy
     copy(
         osp.join(PROJECT_PATH, "garage/config_personal_template.py"),
         osp.join(PROJECT_PATH, "garage/config_personal.py"))
+    write_config()
     from garage.config_personal import *  # noqa: F401, F403
     print("Personal config created, but you should probably edit it before "
           "further experiments are run")
