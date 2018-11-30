@@ -5,6 +5,7 @@ import json
 
 ALL_REGION_AWS_SECURITY_GROUP_IDS = {}
 ALL_REGION_AWS_KEY_NAMES = {}
+S3_BUCKET_NAME = os.environ["GARAGE_S3_BUCKET"]
 
 CONFIG_TEMPLATE = Template("""
 import os.path as osp
