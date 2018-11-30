@@ -109,7 +109,7 @@ def write_config():
             ALL_REGION_AWS_SECURITY_GROUP_IDS, indent=4),
         s3_bucket_name=S3_BUCKET_NAME,
     )
-    config_personal_file = os.path.join(config.PROJECT_PATH,
+    config_personal_file = os.path.join(PROJECT_PATH,
                                         "garage/config_personal.py")
     if os.path.exists(config_personal_file):
         if not query_yes_no("garage/config_personal.py exists. Override?",
