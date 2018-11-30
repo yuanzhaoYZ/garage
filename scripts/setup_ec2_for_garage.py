@@ -112,6 +112,7 @@ def setup_iam():
 
 
 def setup_s3():
+    from garage.config_personal import * 
     print("Creating S3 bucket at s3://%s" % S3_BUCKET_NAME)
     s3_client = boto3.client(
         "s3",
@@ -136,6 +137,7 @@ def setup_s3():
 
 
 def setup_ec2():
+    from garage.config_personal import * 
     for region in ["us-east-1", "us-west-1", "us-west-2"]:
         print("Setting up region %s" % region)
 
